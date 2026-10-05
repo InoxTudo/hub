@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<title>InoxTudo — HUB de implantação</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+/* HUB de implantação — página-ponte Gabriel (dev) × InoxTudo (CEO e equipe): andamento, pendências, dúvidas e arquivos do projeto.
+   No ar desde 05/10/2026, ligado ao Supabase (projeto "inoxtudo"): login, tabelas e armazenamento privado com regras de acesso no banco.
+   Visual aprovado pelo Gabriel no protótipo local. Sem exemplos inventados: tudo começa vazio. Nenhuma ação grava sem confirmação. */
+:root{ --bg:#0d0e11; --painel:#16181c; --painel-2:#1c1f24; --borda:#2a2e35; --borda-forte:#3a3f48; --fg:#eef0f3; --fg-2:#c2c7cf; --fg-3:#9aa1ac;
+  --acento:#dcae5e; --ouro:#e3b341; --pos:#6fc493; --neg:#e98069; --azul:#7fb2e5; --roxo:#b49cf0;
+  --sans:'Work Sans',system-ui,sans-serif; --disp:'Anton','Work Sans',sans-serif; --mono:'IBM Plex Mono',ui-monospace,monospace; color-scheme:dark; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{margin:0; background:var(--bg); color:var(--fg); font:400 15px/1.55 var(--sans); -webkit-font-smoothing:antialiased; font-variant-numeric:tabular-nums;}
+button,select,input,textarea{font:inherit; color:inherit;} :focus-visible{outline:2px solid var(--acento); outline-offset:2px;}
+[hidden]{display:none !important;}
+.marca{font-family:var(--disp); font-size:27px; line-height:.9; letter-spacing:.02em; border:1px solid var(--borda-forte); border-radius:10px; padding:8px 12px; display:inline-block;}
+.slogan{color:var(--ouro); font-weight:600; font-size:13px;}
+.btn{border:1px solid var(--borda-forte); background:var(--painel-2); border-radius:10px; padding:9px 16px; font-weight:600; cursor:pointer; transition:transform .12s, border-color .15s, background .15s;}
+.btn:hover{border-color:var(--acento);} .btn:active{transform:scale(.97);}
+.btn.ouro{background:var(--acento); border-color:var(--acento); color:#17130a;} .btn.ouro:hover{filter:brightness(1.08);}
+.btn.mini{padding:5px 11px; font-size:13px; border-radius:8px;}
+input,textarea,select{width:100%; background:var(--painel-2); border:1px solid var(--borda-forte); border-radius:10px; padding:10px 12px;}
+textarea{min-height:84px; resize:vertical;} label.campo{display:grid; gap:6px; font-size:13px; color:var(--fg-2); font-weight:500;}
+.tag{display:inline-flex; align-items:center; gap:6px; border:1px solid var(--borda-forte); border-radius:999px; padding:2px 10px; font-size:12px; font-weight:600; white-space:nowrap;}
+.tag.ok{color:var(--pos); border-color:color-mix(in srgb,var(--pos) 55%,transparent);} .tag.ab{color:var(--ouro); border-color:color-mix(in srgb,var(--ouro) 55%,transparent);}
+.tag.at{color:var(--neg); border-color:color-mix(in srgb,var(--neg) 55%,transparent);} .tag.az{color:var(--azul); border-color:color-mix(in srgb,var(--azul) 55%,transparent);}
+small,.sub{color:var(--fg-3);} .mono{font-family:var(--mono); font-size:13px;}
+
+/* avatar: foto do usuário; sem foto, iniciais na cor da pessoa */
+.av{--t:40px; width:var(--t); height:var(--t); border-radius:50%; flex:none; display:grid; place-items:center; font-weight:700; font-size:calc(var(--t)*.38);
+  color:#14161a; background:var(--c,var(--acento)); background-size:cover; background-position:center; border:2px solid color-mix(in srgb,var(--c,var(--acento)) 70%,#fff 0%); overflow:hidden;}
+.av.g{--t:64px;} .av.p{--t:28px;}
+.quem{display:flex; align-items:center; gap:10px; min-width:0;} .quem b{display:block; line-height:1.2;} .quem small{display:block; line-height:1.3;}
+
+/* login */
+#login{min-height:100%; display:grid; place-items:center; padding:24px; background:radial-gradient(900px 500px at 50% -10%, rgba(220,174,94,.12), transparent 60%);}
+.login-cx{ background:var(--painel); border:1px solid var(--borda); border-radius:18px; padding:28px; display:grid; gap:16px; animation:sobe .5s cubic-bezier(.2,.9,.3,1.2) both;}
+.login-cx h1{margin:6px 0 0; font-size:22px;} .login-cx p{margin:0; color:var(--fg-2); font-size:14px;}
+.login-col{width:min(420px,100%); display:grid; gap:14px;} .lg-form{display:grid; gap:14px;} .lg-troca{font-size:13.5px !important; text-align:center;}
+.lnk{border:0; background:none; padding:0; color:var(--acento); font-weight:600; cursor:pointer; text-decoration:underline; text-underline-offset:3px;}
+.lg-erro{color:var(--neg) !important; font-weight:600; font-size:13.5px !important;}
+#lg-demo button{border:0; background:none; padding:0 2px; color:var(--ouro); font-weight:700; cursor:pointer; text-decoration:underline; text-underline-offset:3px;}
+.proto{border:1px dashed color-mix(in srgb,var(--ouro) 45%,transparent); color:var(--fg-3); border-radius:10px; padding:8px 12px; font-size:12.5px; text-align:center;}
+
+/* casca */
+#app{display:grid; grid-template-columns:250px 1fr; min-height:100%;}
+aside{border-right:1px solid var(--borda); background:var(--painel); padding:20px 14px; display:flex; flex-direction:column; gap:18px; position:sticky; top:0; height:100vh;}
+nav{display:grid; gap:4px;} nav h6{margin:10px 8px 4px; font-size:11.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--fg-3);}
+nav button{display:flex; align-items:center; gap:12px; border:0; background:none; text-align:left; padding:10px 12px; border-radius:10px; font-weight:600; color:var(--fg-2); cursor:pointer; border-left:3px solid transparent;}
+nav button:hover{background:var(--painel-2); color:var(--fg);} nav button.on{background:var(--painel-2); color:var(--fg); border-left-color:var(--acento);}
+nav .ic{width:26px; height:26px; display:grid; place-items:center; border:1px solid var(--borda-forte); border-radius:7px; font-size:13px;} nav button.on .ic{background:var(--acento); color:#17130a; border-color:var(--acento);}
+nav .cont{margin-left:auto; background:var(--neg); color:#14161a; border-radius:999px; font-size:11.5px; padding:0 7px; font-weight:700;}
+.eu{margin-top:auto; border-top:1px solid var(--borda); padding-top:14px; display:grid; gap:10px;}
+main{padding:26px clamp(16px,3vw,36px) 60px; min-width:0;}
+.topo{display:flex; align-items:center; gap:12px; margin-bottom:6px;} .topo h1{margin:0; font-size:28px; display:flex; align-items:center; gap:12px;}
+.topo h1::before{content:''; width:4px; height:26px; background:var(--acento); border-radius:3px;}
+.perg{color:var(--fg-2); margin:0 0 22px;}
+.grade{display:grid; grid-template-columns:repeat(12,1fr); gap:16px; margin-bottom:16px;}
+.c12{grid-column:span 12;} .c8{grid-column:span 8;} .c6{grid-column:span 6;} .c4{grid-column:span 4;} .c3{grid-column:span 3;}
+.cartao{background:var(--painel); border:1px solid var(--borda); border-radius:16px; padding:18px 20px; min-width:0; animation:sobe .45s cubic-bezier(.2,.9,.3,1.15) both; animation-delay:calc(var(--i,0)*60ms);}
+.cartao h3{margin:0 0 12px; font-size:16px;} .cartao.hero{border-color:color-mix(in srgb,var(--acento) 55%,var(--borda)); background:linear-gradient(135deg,rgba(220,174,94,.10),transparent 55%),var(--painel);}
+.kpi-v{font-family:var(--disp); font-size:44px; line-height:1; letter-spacing:.01em;} .kpi-r{font-weight:600; font-size:13.5px; color:var(--fg-2); margin-bottom:8px;}
+@keyframes sobe{from{opacity:0; transform:translateY(14px) scale(.985);} to{opacity:1; transform:none;}}
+@media (prefers-reduced-motion:reduce){*{animation:none !important; transition:none !important;}}
+
+/* marcos */
+.marcos{display:grid; gap:0;} .marco{display:grid; grid-template-columns:28px 110px 1fr auto; gap:14px; align-items:center; padding:12px 0; border-top:1px solid var(--borda);} .marco:first-child{border-top:0;}
+.bol{width:22px; height:22px; border-radius:50%; border:2px solid var(--borda-forte); display:grid; place-items:center; font-size:12px; font-weight:700;}
+.marco.feito .bol{background:var(--pos); border-color:var(--pos); color:#14161a;} .marco.agora .bol{border-color:var(--acento); box-shadow:0 0 0 4px rgba(220,174,94,.18);}
+.marco .q{font-family:var(--mono); color:var(--fg-2);} .marco b{display:block;} .marco small{display:block;}
+.pend{display:flex; gap:12px; align-items:flex-start; padding:10px 0; border-top:1px solid var(--borda);} .pend:first-child{border-top:0;} .pend input{width:18px; height:18px; margin-top:3px; accent-color:var(--acento);}
+.pend.ok span{text-decoration:line-through; color:var(--fg-3);}
+
+.pedir{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;} .pedir .larga{grid-column:1/-1;} .pendc.ok h4{text-decoration:line-through; color:var(--fg-3);} .pendc .fio-cab{align-items:center; flex-wrap:wrap;}
+/* dúvidas */
+.fios{display:grid; gap:12px;} .fio{background:var(--painel); border:1px solid var(--borda); border-radius:16px; padding:16px 18px; animation:sobe .4s both; animation-delay:calc(var(--i,0)*50ms);}
+.fio-cab{display:flex; gap:12px; align-items:flex-start;} .fio-cab .tx{flex:1; min-width:0;} .fio h4{margin:0 0 2px; font-size:16px;} .fio p{margin:6px 0 0; color:var(--fg-2); white-space:pre-wrap;}
+.resp{display:flex; gap:10px; margin:12px 0 0 14px; padding:10px 12px; background:var(--painel-2); border-radius:12px; border-left:3px solid var(--c,var(--acento));}
+.resp p{margin:2px 0 0;} .resp .q{font-size:13px;} .fio-acoes{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;} .fio-acoes textarea{min-height:44px; flex:1 1 260px;}
+.filtros{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;} .filtros button{border-radius:999px;} .filtros button.on{background:var(--acento); border-color:var(--acento); color:#17130a;}
+
+/* arquivos */
+.solta{border:2px dashed var(--borda-forte); border-radius:16px; padding:22px; text-align:center; color:var(--fg-2); cursor:pointer; transition:border-color .15s, background .15s;} .solta:hover,.solta.sobre{border-color:var(--acento); background:rgba(220,174,94,.06);}
+table{width:100%; border-collapse:collapse;} th{font:500 12.5px var(--mono); color:var(--fg-3); text-align:left; padding:8px 10px; border-bottom:1px solid var(--borda-forte);} td{padding:10px; border-bottom:1px solid var(--borda); vertical-align:middle;}
+.rolar-x{overflow-x:auto;}
+/* acessos */
+.pessoa{display:grid; grid-template-columns:1fr auto auto auto; gap:12px; align-items:center; padding:12px 0; border-top:1px solid var(--borda);} .pessoa:first-child{border-top:0;} .pessoa select{width:auto;}
+/* diálogo de confirmação e aviso */
+#dlg{position:fixed; inset:0; background:rgba(0,0,0,.6); display:grid; place-items:center; z-index:50; padding:20px;} #dlg .cx{background:var(--painel); border:1px solid var(--borda-forte); border-radius:16px; padding:22px; width:min(420px,100%); display:grid; gap:14px; animation:sobe .25s both;}
+#dlg .ac{display:flex; gap:10px; justify-content:flex-end;}
+#aviso{position:fixed; left:50%; bottom:26px; transform:translateX(-50%); background:#eef0f3; color:#14161a; border-radius:999px; padding:10px 20px; font-weight:600; z-index:60; box-shadow:0 6px 24px rgba(0,0,0,.4);}
+#selo{position:fixed; right:14px; bottom:14px; background:var(--acento); color:#17130a; font:600 12px/1.2 var(--sans); padding:7px 12px; border-radius:999px; z-index:40; pointer-events:none;}
+@media (max-width:1000px){ #app{grid-template-columns:1fr;} aside{position:static; height:auto; flex-direction:row; flex-wrap:wrap; align-items:center; gap:10px; padding:12px;} nav{display:flex; flex-wrap:wrap; gap:6px;} nav h6{display:none;} nav button{padding:10px 12px; min-height:40px;} .eu{margin:0 0 0 auto; border:0; padding:0; display:flex; align-items:center;} .eu .quem small{display:none;}
+  .c8,.c6,.c4,.c3{grid-column:span 12;} .marco{grid-template-columns:28px 1fr; } .marco .q{grid-column:2;} .marco .tag{grid-column:2; justify-self:start;} .marco>div{grid-column:2;} .pessoa{grid-template-columns:1fr 1fr;} .pedir{grid-template-columns:1fr;} .topo h1{font-size:23px;} #selo{display:none;} }
+</style>
+</head>
+<body>
+<section id="login" hidden>
+  <div class="login-col">
+    <div class="login-cx">
+      <div><span class="marca">INOX TUDO</span><div class="slogan" style="margin-top:8px">HUB de implantação</div></div>
+      <form id="lg-entrar" class="lg-form">
+        <div><h1>Entrar</h1><p>Acompanhe o andamento, as pendências e as dúvidas do projeto.</p></div>
+        <label class="campo">E-mail<input id="lg-email" type="email" placeholder="voce@empresa.com.br" autocomplete="username" required></label>
+        <label class="campo">Senha<input id="lg-senha" type="password" placeholder="Sua senha" autocomplete="current-password" required></label>
+        <p class="lg-erro" id="lg-erro" hidden></p>
+        <button class="btn ouro" type="submit">Entrar</button>
+        <p class="lg-troca">Ainda não tem acesso? <button type="button" class="lnk" data-lg-modo="pedir">Solicitar acesso</button></p>
+      </form>
+      <form id="lg-pedir" class="lg-form" hidden>
+        <div><h1>Solicitar acesso</h1><p>Preencha seus dados. Depois que o responsável do projeto liberar, é só entrar com este e-mail e esta senha.</p></div>
+        <label class="campo">Nome<input id="pd-nome" placeholder="Como você quer aparecer" autocomplete="name" required></label>
+        <label class="campo">E-mail<input id="pd-email" type="email" placeholder="voce@empresa.com.br" autocomplete="username" required></label>
+        <label class="campo">Crie uma senha<input id="pd-senha" type="password" placeholder="Mínimo de 8 caracteres" autocomplete="new-password" minlength="8" required></label>
+        <p class="lg-erro" id="pd-erro" hidden></p>
+        <button class="btn ouro" type="submit">Enviar pedido</button>
+        <p class="lg-troca">Já tem acesso? <button type="button" class="lnk" data-lg-modo="entrar">Entrar</button></p>
+      </form>
+      <div id="lg-ok" class="lg-form" hidden><div><h1>Pedido enviado</h1><p>Enviamos um e-mail para você confirmar o endereço. Depois de confirmar, o acesso é liberado pelo responsável do projeto e você entra com o e-mail e a senha que criou.</p></div>
+        <button class="btn" type="button" data-lg-modo="entrar">Voltar para Entrar</button></div>
+      <div id="lg-espera" class="lg-form" hidden><div><h1>Aguardando liberação</h1><p id="lg-espera-tx"></p></div>
+        <button class="btn" type="button" id="bt-sair-espera">Sair</button></div>
+    </div>
+  </div>
+</section>
+
+<div id="app" hidden>
+  <aside>
+    <div><span class="marca">INOX TUDO</span><div class="slogan" style="margin-top:8px">HUB de implantação</div></div>
+    <nav id="menu">
+      <h6>Projeto</h6>
+      <button data-tela="andamento"><span class="ic">◆</span>Andamento</button>
+      <button data-tela="pendencias"><span class="ic">☑</span>Pendências<span class="cont" id="n-pen" hidden></span></button>
+      <button data-tela="duvidas"><span class="ic">?</span>Dúvidas<span class="cont" id="n-duv" hidden></span></button>
+      <button data-tela="arquivos"><span class="ic">▤</span>Arquivos</button>
+      <h6 data-so-admin>Controle</h6>
+      <button data-tela="acessos" data-so-admin><span class="ic">●</span>Acessos<span class="cont" id="n-pend" hidden></span></button>
+    </nav>
+    <div class="eu"><div class="quem" id="eu"></div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap"><button class="btn mini" id="bt-foto">Trocar foto</button><button class="btn mini" id="bt-sair">Sair</button></div>
+      <input type="file" id="in-foto" accept="image/*" hidden></div>
+  </aside>
+  <main id="conteudo"></main>
+</div>
+
+<div id="dlg" hidden><div class="cx"><b id="dlg-t"></b><div class="ac"><button class="btn" id="dlg-n">Cancelar</button><button class="btn ouro" id="dlg-s">Confirmar</button></div></div></div>
+<div id="aviso" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+'use strict';
+/* ================= Supabase (projeto "inoxtudo", exclusivo da InoxTudo, plano gratuito) =================
+   A chave abaixo é a PUBLICÁVEL: feita para ficar na página. Quem protege os dados são as regras de acesso do banco (RLS):
+   anônimo não lê nada; quem pede acesso nasce "pendente" e só vê o próprio perfil; só o "liberado" lê e escreve no HUB;
+   só o Dev muda nível e acesso de outra pessoa (e ninguém muda o próprio). Fotos e arquivos ficam em armazenamento PRIVADO,
+   entregues por link temporário. A chave de administração NUNCA entra aqui. */
+const SUPA_URL = 'https://kopudvjyxtcwkdulxosb.supabase.co', SUPA_CHAVE = 'sb_publishable_T3dM1MEVWG1iYlDFnvZLjw_659wCKxB';
+const sb = window.supabase.createClient(SUPA_URL, SUPA_CHAVE, { auth: { persistSession: true, autoRefreshToken: true } });
+
+let D = { usuarios: [], marcos: [], pendencias: [], duvidas: [], arquivos: [] }, EU = null, SESSAO = null, TELA = 'andamento', FILTRO = 'todas', FPEND = 'abertas';
+const $ = s => document.querySelector(s), esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const PAPEL = { dev: 'Dev', ceo: 'CEO', equipe: 'Equipe' };
+/* Níveis (Gabriel, 05/10/2026): todo usuário liberado VÊ e EDITA tudo (cronograma, pendências, dúvidas, arquivos).
+   Telas: Andamento (próximo marco + cronograma), Pendências (caixa de solicitação + lista), Dúvidas, Arquivos e Acessos.
+   Só o Dev tem o controle de acesso (tela Acessos: liberar, bloquear, mudar nível). */
+const admin = () => EU && EU.papel === 'dev', U = id => D.usuarios.find(u => u.id === id) || { nome: '—', cor: '#555', foto: '' };
+const ini = n => String(n || '?').split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase();
+const av = (u, cls = '') => `<span class="av ${cls}" style="--c:${esc(u.cor)};${u.foto ? `background-image:url('${esc(u.foto)}')` : ''}" title="${esc(u.nome)}">${u.foto ? '' : esc(ini(u.nome))}</span>`;
+const quem = (u, sub, cls) => `<span class="quem">${av(u, cls)}<span><b>${esc(u.nome)}</b><small>${esc(sub ?? PAPEL[u.papel])}</small></span></span>`;
+const quando = iso => { const d = new Date(iso); return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' · ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }); };
+const tam = b => b >= 1e6 ? (b / 1e6).toFixed(1).replace('.', ',') + ' MB' : Math.max(1, Math.round(b / 1e3)) + ' KB';
+function aviso(t) { const a = $('#aviso'); a.textContent = t; a.hidden = false; clearTimeout(aviso._t); aviso._t = setTimeout(() => a.hidden = true, 3200); }
+/** Regra do projeto: nenhuma ação grava sem confirmação. */
+function confirmar(texto) { return new Promise(r => { $('#dlg-t').textContent = texto; $('#dlg').hidden = false; $('#dlg-s').focus();
+  const fim = v => { $('#dlg').hidden = true; $('#dlg-s').onclick = $('#dlg-n').onclick = null; r(v); }; $('#dlg-s').onclick = () => fim(true); $('#dlg-n').onclick = () => fim(false); }); }
+const ok_ = r => { if (r && r.error) throw r.error; return r ? r.data : null; };
+/** Confirma, executa no banco, recarrega e redesenha. Erro do banco vira aviso (nada é mostrado como gravado se não gravou). */
+async function grava(texto, acao, ok) {
+  if (!(await confirmar(texto))) return false;
+  try { await acao(); await carregar(); aviso(ok || 'Gravado'); pintar(); return true; }
+  catch (e) { console.error(e); aviso('Não foi possível gravar: ' + (e.message || 'tente de novo')); await carregar().catch(() => {}); pintar(); return false; }
+}
+/** Foto do usuário: recortada e reduzida para 160 px (JPEG) antes de enviar. */
+function reduzir(arq, lado = 160) { return new Promise((res, rej) => { const im = new Image(), url = URL.createObjectURL(arq); im.onload = () => { const s = Math.min(im.width, im.height), c = document.createElement('canvas'); c.width = c.height = lado;
+  c.getContext('2d').drawImage(im, (im.width - s) / 2, (im.height - s) / 2, s, s, 0, 0, lado, lado); URL.revokeObjectURL(url); c.toBlob(b => b ? res(b) : rej(), 'image/jpeg', .82); }; im.onerror = rej; im.src = url; }); }
+const nomeSeguro = n => n.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w.\-]+/g, '_').slice(-80);
+
+/* ================= leitura ================= */
+async function carregar() {
+  const [p, m, pe, du, re, ar] = await Promise.all([
+    sb.from('perfis').select('id,nome,email,papel,status,cor,foto').order('criado_em'),
+    sb.from('marcos').select('*').order('ordem'),
+    sb.from('pendencias').select('*').order('em', { ascending: false }),
+    sb.from('duvidas').select('*').order('em', { ascending: false }),
+    sb.from('respostas').select('*').order('em'),
+    sb.from('arquivos').select('*').order('em', { ascending: false })]);
+  const perfis = ok_(p) || [], fotos = perfis.filter(x => x.foto).map(x => x.foto), urls = {};
+  if (fotos.length) { const s = await sb.storage.from('fotos').createSignedUrls(fotos, 3600); (s.data || []).forEach(x => { if (x.signedUrl) urls[x.path] = x.signedUrl; }); }
+  D.usuarios = perfis.map(x => ({ ...x, foto: x.foto ? urls[x.foto] || '' : '', fotoPath: x.foto }));
+  D.marcos = ok_(m) || []; D.arquivos = ok_(ar) || [];
+  D.pendencias = (ok_(pe) || []).map(x => ({ ...x, okEm: x.ok_em }));
+  const resp = ok_(re) || []; D.duvidas = (ok_(du) || []).map(d => ({ ...d, resp: resp.filter(r => r.duvida_id === d.id) }));
+  EU = SESSAO ? D.usuarios.find(u => u.id === SESSAO.user.id) || null : null;
+}
+
+/* ================= telas ================= */
+function tAndamento() {
+  const prox = D.marcos.find(m => m.st !== 'feito');
+  let h = `<div class="topo"><h1>Andamento</h1></div><p class="perg">Onde o projeto está e o que vem a seguir.</p><div class="grade">`
+    + `<section class="cartao hero c12"><div class="kpi-r">Próximo marco</div><div class="kpi-v">${esc(prox ? prox.quando : '—')}</div><div style="margin-top:8px"><b>${esc(prox ? prox.tit : 'Tudo entregue')}</b><br><small>${esc(prox ? prox.sub : '')}</small></div></section></div>`;
+  h += `<div class="grade"><section class="cartao c12" style="--i:1"><h3>Cronograma</h3><div class="marcos">` + D.marcos.map(m => `<div class="marco ${m.st}"><span class="bol">${m.st === 'feito' ? '✓' : ''}</span><span class="q">${esc(m.quando)}</span><div><b>${esc(m.tit)}</b><small>${esc(m.sub)}</small></div>`
+      + `<select data-marco="${m.id}" aria-label="Situação de ${esc(m.tit)}">${[['futuro', 'A fazer'], ['agora', 'Em andamento'], ['feito', 'Entregue']].map(([v, r]) => `<option value="${v}"${m.st === v ? ' selected' : ''}>${r}</option>`).join('')}</select></div>`).join('') + '</div></section></div>';
+  return h;
+}
+const hojeISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+const dia = iso => iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) : '';
+function tPendencias() {
+  const lib = D.usuarios.filter(u => u.status === 'liberado' && u.id !== EU.id), padrao = admin() ? (lib.find(u => u.papel === 'ceo') || lib[0]) : (lib.find(u => u.papel === 'dev') || lib[0]);
+  const ab = D.pendencias.filter(p => !p.ok), L = D.pendencias.filter(p => FPEND === 'todas' ? true : FPEND === 'minhas' ? p.para === EU.id && !p.ok : FPEND === 'resolvidas' ? p.ok : !p.ok)
+    .sort((a, b) => (a.ok - b.ok) || (a.prazo || '9999').localeCompare(b.prazo || '9999'));
+  let h = `<div class="topo"><h1>Pendências</h1></div><p class="perg">O que cada lado precisa enviar ou responder para o projeto andar.</p>`
+    + `<section class="cartao hero" style="margin-bottom:16px"><h3>Solicitar informação ou arquivo</h3>`
+    + (lib.length ? `<div class="pedir"><label class="campo">Para quem<select id="ped-para">${lib.map(u => `<option value="${u.id}"${padrao && u.id === padrao.id ? ' selected' : ''}>${esc(u.nome)} · ${PAPEL[u.papel]}</option>`).join('')}</select></label>`
+      + `<label class="campo">O que é<select id="ped-tipo"><option value="info">Informação</option><option value="arquivo">Arquivo</option></select></label>`
+      + `<label class="campo">Prazo <input type="date" id="ped-prazo" min="${hojeISO()}"></label>`
+      + `<label class="campo larga">O que você precisa<textarea id="ped-tx" maxlength="2000"></textarea></label>`
+      + `<div class="larga"><button class="btn ouro" id="bt-pedir">Solicitar</button></div></div>` : '<small>Ainda não há outra pessoa liberada para receber o pedido.</small>') + '</section>'
+    + `<div class="filtros">${[['abertas', `Abertas ${ab.length}`], ['minhas', `Para mim ${ab.filter(p => p.para === EU.id).length}`], ['resolvidas', 'Resolvidas'], ['todas', 'Todas']].map(([v, r]) => `<button class="btn mini${FPEND === v ? ' on' : ''}" data-fpend="${v}">${r}</button>`).join('')}</div><div class="fios">`;
+  h += L.length ? L.map((p, i) => { const para = U(p.para), de = U(p.de), atr = !p.ok && p.prazo && p.prazo < hojeISO();
+    return `<article class="fio pendc${p.ok ? ' ok' : ''}" style="--i:${i}"><div class="fio-cab">${av(para)}<div class="tx"><h4>${esc(p.tx)}</h4>`
+      + `<small>Para <b>${esc(para.nome)}</b> · pedido por ${esc(de.nome)} em ${quando(p.em)}${p.arq ? ` · arquivo: ${esc(p.arq)}` : ''}</small></div>`
+      + `<span class="tag az">${p.tipo === 'arquivo' ? 'Arquivo' : 'Informação'}</span>`
+      + (p.ok ? '<span class="tag ok">Resolvida</span>' : p.prazo ? `<span class="tag ${atr ? 'at' : 'ab'}">${atr ? 'Atrasada · ' : 'até '}${dia(p.prazo)}</span>` : '<span class="tag">sem prazo</span>') + '</div>'
+      + `<div class="fio-acoes">${!p.ok && p.tipo === 'arquivo' ? `<button class="btn mini ouro" data-pend-arq="${p.id}">Enviar o arquivo</button>` : ''}`
+      + `<button class="btn mini" data-pend-ok="${p.id}">${p.ok ? 'Reabrir' : 'Marcar como resolvida'}</button><button class="btn mini" data-pend-rm="${p.id}">Excluir</button></div></article>`; }).join('')
+    : '<section class="cartao"><small>Nenhuma pendência neste filtro.</small></section>';
+  return h + '</div><input type="file" id="in-pend-arq" hidden>';
+}
+function tDuvidas() {
+  const L = D.duvidas.filter(d => FILTRO === 'todas' || (FILTRO === 'minhas' ? d.de === EU.id : d.st === FILTRO)).sort((a, b) => b.em.localeCompare(a.em));
+  let h = `<div class="topo"><h1>Dúvidas</h1></div><p class="perg">Pergunte aqui. Cada dúvida fica com quem perguntou, quem respondeu e quando.</p>`
+    + `<section class="cartao" style="margin-bottom:16px"><h3>Nova dúvida</h3><div style="display:grid; gap:10px"><input id="duv-tit" placeholder="Assunto" maxlength="120"><textarea id="duv-tx" maxlength="5000" placeholder="Descreva a dúvida. Se ajudar, envie um print em Arquivos."></textarea><div><button class="btn ouro" id="bt-duv">Enviar dúvida</button></div></div></section>`
+    + `<div class="filtros">${[['todas', 'Todas'], ['aberta', 'Abertas'], ['respondida', 'Respondidas'], ['minhas', 'Minhas']].map(([v, r]) => `<button class="btn mini${FILTRO === v ? ' on' : ''}" data-filtro="${v}">${r}</button>`).join('')}</div><div class="fios">`;
+  h += L.length ? L.map((d, i) => { const u = U(d.de);
+    return `<article class="fio" style="--i:${i}"><div class="fio-cab">${av(u)}<div class="tx"><h4>${esc(d.tit)}</h4><small>${esc(u.nome)} · ${quando(d.em)}</small>${d.tx ? `<p>${esc(d.tx)}</p>` : ''}</div><span class="tag ${d.st === 'aberta' ? 'ab' : 'ok'}">${d.st === 'aberta' ? 'Aberta' : 'Respondida'}</span></div>`
+      + d.resp.map(r => { const ur = U(r.de); return `<div class="resp" style="--c:${esc(ur.cor)}">${av(ur, 'p')}<div><span class="q"><b>${esc(ur.nome)}</b> <small>· ${quando(r.em)}</small></span><p>${esc(r.tx)}</p></div></div>`; }).join('')
+      + `<div class="fio-acoes"><textarea data-resp-tx="${d.id}" maxlength="5000" placeholder="Responder…"></textarea><button class="btn mini" data-resp="${d.id}">Responder</button>`
+      + `<button class="btn mini" data-st="${d.id}">${d.st === 'aberta' ? 'Marcar como respondida' : 'Reabrir'}</button></div></article>`; }).join('')
+    : '<section class="cartao"><small>Nenhuma dúvida neste filtro.</small></section>';
+  return h + '</div>';
+}
+function tArquivos() {
+  const L = D.arquivos;
+  return `<div class="topo"><h1>Arquivos</h1></div><p class="perg">Relatórios, extratos, prints e documentos do projeto. Todos os liberados veem.</p>`
+    + `<div class="solta" id="solta" tabindex="0"><b>Arraste um arquivo aqui</b> ou clique para escolher<br><small>Até 20 MB por arquivo. Fica no armazenamento privado do projeto.</small></div><input type="file" id="in-arq" hidden>`
+    + `<section class="cartao" style="margin-top:16px"><h3>${L.length} arquivo${L.length === 1 ? '' : 's'}</h3>` + (L.length ? `<div class="rolar-x"><table><thead><tr><th>Arquivo</th><th>Tipo</th><th>Enviado por</th><th>Quando</th><th>Tamanho</th><th></th></tr></thead><tbody>`
+    + L.map(a => `<tr><td><b>${esc(a.nome)}</b></td><td><span class="tag az">${esc(a.tipo)}</span></td><td>${quem(U(a.de), '', 'p')}</td><td class="mono">${quando(a.em)}</td><td class="mono">${tam(a.tam)}</td><td style="text-align:right; white-space:nowrap">`
+      + `<button class="btn mini" data-baixar="${a.id}">Baixar</button> <button class="btn mini" data-apaga="${a.id}">Excluir</button></td></tr>`).join('') + '</tbody></table></div>' : '<small>Nenhum arquivo ainda.</small>') + '</section>';
+}
+function tAcessos() {
+  const ord = { pendente: 0, liberado: 1, bloqueado: 2 }, L = [...D.usuarios].sort((a, b) => ord[a.status] - ord[b.status]);
+  return `<div class="topo"><h1>Acessos</h1></div><p class="perg">Quem entra no HUB. Quem está liberado vê e edita tudo; só o Dev libera, muda o nível ou bloqueia. Cada mudança pede confirmação.</p>`
+    + `<section class="cartao"><h3>${L.filter(u => u.status === 'pendente').length} pedido(s) aguardando · ${L.filter(u => u.status === 'liberado').length} liberado(s)</h3>`
+    + L.map(u => `<div class="pessoa">${quem(u, u.email)}<span class="tag ${u.status === 'liberado' ? 'ok' : u.status === 'pendente' ? 'ab' : 'at'}">${u.status === 'liberado' ? 'Liberado' : u.status === 'pendente' ? 'Aguardando' : 'Bloqueado'}</span>`
+      + `<select data-papel="${u.id}" aria-label="Nível de ${esc(u.nome)}"${u.id === EU.id ? ' disabled' : ''}>${Object.entries(PAPEL).map(([v, r]) => `<option value="${v}"${u.papel === v ? ' selected' : ''}>${r}</option>`).join('')}</select>`
+      + (u.id === EU.id ? '<small>você</small>' : u.status === 'liberado' ? `<button class="btn mini" data-acesso="${u.id}" data-para="bloqueado">Bloquear</button>` : `<button class="btn mini ouro" data-acesso="${u.id}" data-para="liberado">Liberar</button>`) + '</div>').join('') + '</section>';
+}
+const TELAS = { andamento: tAndamento, pendencias: tPendencias, duvidas: tDuvidas, arquivos: tArquivos, acessos: tAcessos };
+function pintar() {
+  const dentro = !!(EU && EU.status === 'liberado');
+  $('#login').hidden = dentro; $('#app').hidden = !dentro;
+  if (!dentro) { if (SESSAO && EU) lgModo('espera'); return; }
+  if (TELA === 'acessos' && !admin()) TELA = 'andamento';
+  document.querySelectorAll('[data-so-admin]').forEach(e => e.hidden = !admin());
+  document.querySelectorAll('#menu [data-tela]').forEach(b => b.classList.toggle('on', b.dataset.tela === TELA));
+  const ab = D.duvidas.filter(d => d.st === 'aberta').length, pe = D.usuarios.filter(u => u.status === 'pendente').length, pm = D.pendencias.filter(p => !p.ok && p.para === EU.id).length;
+  $('#n-duv').hidden = !ab; $('#n-duv').textContent = ab; $('#n-pen').hidden = !pm; $('#n-pen').textContent = pm; $('#n-pend').hidden = !pe; $('#n-pend').textContent = pe;
+  $('#eu').innerHTML = quem(EU); $('#conteudo').innerHTML = TELAS[TELA]();
+}
+
+/* ================= ações ================= */
+async function subirArquivo(arq, tipo) {   // → caminho no armazenamento (pasta do próprio usuário)
+  const caminho = `${EU.id}/${Date.now()}-${nomeSeguro(arq.name)}`;
+  ok_(await sb.storage.from('hub-arquivos').upload(caminho, arq, { contentType: arq.type || 'application/octet-stream', upsert: false }));
+  ok_(await sb.from('arquivos').insert({ de: EU.id, nome: arq.name, tam: arq.size, tipo, caminho }));
+  return caminho;
+}
+async function enviarArquivo(arq) { if (!arq) return; if (arq.size > 20 * 1048576) { aviso('Até 20 MB por arquivo'); return; }
+  grava(`Enviar "${arq.name}" para o HUB?`, () => subirArquivo(arq, /\.(png|jpe?g|webp|gif)$/i.test(arq.name) ? 'Print' : 'Documento'), 'Arquivo enviado'); }
+document.addEventListener('click', async e => { const t = s => e.target.closest(s);
+  const md = t('[data-lg-modo]'); if (md) { lgModo(md.dataset.lgModo); return; }
+  const tl = t('#menu [data-tela]'); if (tl) { TELA = tl.dataset.tela; await carregar().catch(() => {}); pintar(); window.scrollTo(0, 0); return; }
+  if (t('#bt-sair') || t('#bt-sair-espera')) { if (await confirmar('Sair do HUB?')) { await sb.auth.signOut(); } return; }
+  if (t('#bt-foto')) { $('#in-foto').click(); return; }
+  const fl = t('[data-filtro]'); if (fl) { FILTRO = fl.dataset.filtro; pintar(); return; }
+  if (t('#bt-duv')) { const tit = $('#duv-tit').value.trim(), tx = $('#duv-tx').value.trim(); if (!tit) { aviso('Escreva o assunto da dúvida'); return; }
+    grava('Enviar esta dúvida?', async () => ok_(await sb.from('duvidas').insert({ de: EU.id, tit, tx })), 'Dúvida enviada'); return; }
+  const rp = t('[data-resp]'); if (rp) { const tx = document.querySelector(`[data-resp-tx="${rp.dataset.resp}"]`).value.trim(); if (!tx) { aviso('Escreva a resposta'); return; }
+    grava('Enviar a resposta?', async () => ok_(await sb.from('respostas').insert({ duvida_id: rp.dataset.resp, de: EU.id, tx })), 'Resposta enviada'); return; }
+  const st = t('[data-st]'); if (st) { const d = D.duvidas.find(x => x.id === st.dataset.st), para = d.st === 'aberta' ? 'respondida' : 'aberta';
+    grava(para === 'respondida' ? 'Marcar a dúvida como respondida?' : 'Reabrir a dúvida?', async () => ok_(await sb.from('duvidas').update({ st: para }).eq('id', d.id))); return; }
+  if (t('#solta')) { $('#in-arq').click(); return; }
+  const bx = t('[data-baixar]'); if (bx) { const a = D.arquivos.find(x => x.id === bx.dataset.baixar);
+    const r = await sb.storage.from('hub-arquivos').createSignedUrl(a.caminho, 60, { download: a.nome }); if (r.error) { aviso('Não foi possível baixar'); return; } window.location.href = r.data.signedUrl; return; }
+  const ap = t('[data-apaga]'); if (ap) { const a = D.arquivos.find(x => x.id === ap.dataset.apaga);
+    grava(`Excluir "${a.nome}"?`, async () => { ok_(await sb.storage.from('hub-arquivos').remove([a.caminho])); ok_(await sb.from('arquivos').delete().eq('id', a.id)); }, 'Arquivo excluído'); return; }
+  const ac = t('[data-acesso]'); if (ac) { const u = U(ac.dataset.acesso), para = ac.dataset.para;
+    grava(`${para === 'liberado' ? 'Liberar' : 'Bloquear'} o acesso de ${u.nome}?`, async () => ok_(await sb.from('perfis').update({ status: para }).eq('id', u.id)), para === 'liberado' ? 'Acesso liberado' : 'Acesso bloqueado'); return; }
+  const fp = t('[data-fpend]'); if (fp) { FPEND = fp.dataset.fpend; pintar(); return; }
+  if (t('#bt-pedir')) { const tx = $('#ped-tx').value.trim(), para = $('#ped-para').value, tipo = $('#ped-tipo').value, prazo = $('#ped-prazo').value || null; if (!tx) { aviso('Escreva o que você precisa'); return; }
+    grava(`Solicitar ${tipo === 'arquivo' ? 'o arquivo' : 'a informação'} para ${U(para).nome}?`, async () => ok_(await sb.from('pendencias').insert({ de: EU.id, para, tipo, tx, prazo })), 'Solicitação enviada'); return; }
+  const po = t('[data-pend-ok]'); if (po) { const p = D.pendencias.find(x => x.id === po.dataset.pendOk), novo = !p.ok;
+    grava(novo ? 'Marcar a pendência como resolvida?' : 'Reabrir a pendência?', async () => ok_(await sb.from('pendencias').update({ ok: novo, ok_em: novo ? new Date().toISOString() : null }).eq('id', p.id))); return; }
+  const pr = t('[data-pend-rm]'); if (pr) { grava('Excluir esta pendência?', async () => ok_(await sb.from('pendencias').delete().eq('id', pr.dataset.pendRm)), 'Pendência excluída'); return; }
+  const pa = t('[data-pend-arq]'); if (pa) { const i = $('#in-pend-arq'); i.dataset.pend = pa.dataset.pendArq; i.click(); return; }
+});
+document.addEventListener('change', async e => { const el = e.target;
+  if (el.id === 'in-foto' && el.files[0]) { const foto = await reduzir(el.files[0]).catch(() => null); el.value = ''; if (!foto) { aviso('Não consegui ler a imagem'); return; }
+    grava('Usar esta foto no seu perfil?', async () => { const caminho = `${EU.id}/foto.jpg`;
+      ok_(await sb.storage.from('fotos').upload(caminho, foto, { contentType: 'image/jpeg', upsert: true })); ok_(await sb.from('perfis').update({ foto: caminho }).eq('id', EU.id)); }, 'Foto atualizada'); return; }
+  if (el.id === 'in-arq') { const a = el.files[0]; el.value = ''; enviarArquivo(a); return; }
+  if (el.id === 'in-pend-arq') { const a = el.files[0], p = D.pendencias.find(x => x.id === el.dataset.pend); el.value = ''; if (!a || !p) return; if (a.size > 20 * 1048576) { aviso('Até 20 MB por arquivo'); return; }
+    grava(`Enviar "${a.name}" e resolver a pendência?`, async () => { await subirArquivo(a, 'Pendência'); ok_(await sb.from('pendencias').update({ ok: true, ok_em: new Date().toISOString(), arq: a.name }).eq('id', p.id)); }, 'Arquivo enviado e pendência resolvida'); return; }
+  if (el.dataset.marco) { const m = D.marcos.find(x => x.id === el.dataset.marco), v = el.value;
+    if (!(await grava(`Mudar "${m.tit}" para ${el.selectedOptions[0].text}?`, async () => ok_(await sb.from('marcos').update({ st: v, atualizado_por: EU.id, atualizado_em: new Date().toISOString() }).eq('id', m.id))))) el.value = m.st; return; }
+  if (el.dataset.papel) { const u = U(el.dataset.papel), v = el.value;
+    if (!(await grava(`Mudar o nível de ${u.nome} para ${PAPEL[v]}?`, async () => ok_(await sb.from('perfis').update({ papel: v }).eq('id', u.id))))) el.value = u.papel; return; }
+});
+['dragover', 'dragleave', 'drop'].forEach(ev => document.addEventListener(ev, e => { const s = e.target.closest && e.target.closest('#solta'); if (!s) return; e.preventDefault(); s.classList.toggle('sobre', ev === 'dragover'); if (ev === 'drop') enviarArquivo(e.dataTransfer.files[0]); }));
+
+/* ================= login ================= */
+function lgModo(m) { ['entrar', 'pedir', 'ok', 'espera'].forEach(k => $('#lg-' + k).hidden = m !== k); $('#lg-erro').hidden = $('#pd-erro').hidden = true;
+  if (m === 'espera') $('#lg-espera-tx').textContent = EU && EU.status === 'bloqueado' ? 'Seu acesso está bloqueado. Fale com o responsável do projeto.' : 'Seu cadastro está feito e aguarda liberação pelo responsável do projeto. Quando for liberado, é só entrar de novo.';
+  const f = m === 'entrar' ? $('#lg-email') : m === 'pedir' ? $('#pd-nome') : null; if (f) f.focus(); }
+const lgErro = (id, t) => { const e = $(id); e.textContent = t; e.hidden = false; };
+const ERROS = { 'Invalid login credentials': 'E-mail ou senha incorretos.', 'Email not confirmed': 'Confirme o seu e-mail pelo link que enviamos antes de entrar.',
+  'User already registered': 'Este e-mail já tem cadastro. Use "Entrar".' };
+document.addEventListener('submit', async e => { e.preventDefault(); const b = e.target.querySelector('button[type="submit"]'); if (b) b.disabled = true;
+  try {
+    if (e.target.id === 'lg-entrar') { const r = await sb.auth.signInWithPassword({ email: $('#lg-email').value.trim(), password: $('#lg-senha').value });
+      if (r.error) lgErro('#lg-erro', ERROS[r.error.message] || 'Não foi possível entrar: ' + r.error.message); }
+    if (e.target.id === 'lg-pedir') { const nome = $('#pd-nome').value.trim(), email = $('#pd-email').value.trim(), senha = $('#pd-senha').value;
+      if (!nome) return lgErro('#pd-erro', 'Informe seu nome.'); if (senha.length < 8) return lgErro('#pd-erro', 'A senha precisa de pelo menos 8 caracteres.');
+      if (!(await confirmar(`Enviar o pedido de acesso de ${nome}?`))) return;
+      const r = await sb.auth.signUp({ email, password: senha, options: { data: { nome }, emailRedirectTo: location.origin + location.pathname } });
+      if (r.error) return lgErro('#pd-erro', ERROS[r.error.message] || 'Não foi possível enviar: ' + r.error.message);
+      e.target.reset(); lgModo('ok'); }
+  } finally { if (b) b.disabled = false; }
+});
+sb.auth.onAuthStateChange((ev, s) => { SESSAO = s; setTimeout(async () => {   // só lê o banco com sessão: sem login não há o que ler
+  if (SESSAO) { try { await carregar(); } catch (x) { console.error(x); } }
+  else { D = { usuarios: [], marcos: [], pendencias: [], duvidas: [], arquivos: [] }; EU = null; lgModo('entrar'); }
+  pintar(); }, 0); });
+</script>
+</body>
+</html>
