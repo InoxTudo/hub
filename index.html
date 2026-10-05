@@ -98,7 +98,28 @@ table{width:100%; border-collapse:collapse;} th{font:500 12.5px var(--mono); col
 #aviso{position:fixed; left:50%; bottom:26px; transform:translateX(-50%); background:#eef0f3; color:#14161a; border-radius:999px; padding:10px 20px; font-weight:600; z-index:60; box-shadow:0 6px 24px rgba(0,0,0,.4);}
 #selo{position:fixed; right:14px; bottom:14px; background:var(--acento); color:#17130a; font:600 12px/1.2 var(--sans); padding:7px 12px; border-radius:999px; z-index:40; pointer-events:none;}
 @media (max-width:1000px){ #app{grid-template-columns:1fr;} aside{position:static; height:auto; flex-direction:row; flex-wrap:wrap; align-items:center; gap:10px; padding:12px;} nav{display:flex; flex-wrap:wrap; gap:6px;} nav h6{display:none;} nav button{padding:10px 12px; min-height:40px;} .eu{margin:0 0 0 auto; border:0; padding:0; display:flex; align-items:center;} .eu .quem small{display:none;}
-  .c8,.c6,.c4,.c3{grid-column:span 12;} .marco{grid-template-columns:28px 1fr; } .marco .q{grid-column:2;} .marco .tag{grid-column:2; justify-self:start;} .marco>div{grid-column:2;} .pessoa{grid-template-columns:1fr 1fr;} .pedir{grid-template-columns:1fr;} .topo h1{font-size:23px;} #selo{display:none;} }
+  .c8,.c6,.c4,.c3{grid-column:span 12;} .marco{grid-template-columns:28px 1fr; } .marco .q{grid-column:2;} .marco .tag{grid-column:2; justify-self:start;} .marco>div{grid-column:2;} .pessoa{grid-template-columns:1fr 1fr;} .pedir{grid-template-columns:1fr;} .topo h1{font-size:23px;} #selo{display:none;}
+  /* celular (05/10/2026): cabeçalho compacto e fixo no topo (marca + você numa linha, menu numa faixa que rola de lado), alvos de toque de 40 px,
+     campos com 16 px (o iPhone não dá zoom ao tocar), cartões que não espremem o texto, Arquivos em cartões no lugar da tabela */
+  aside{position:sticky; top:0; z-index:30; display:grid; grid-template-columns:1fr auto; gap:10px 8px; padding:10px 12px 8px; border-right:0; border-bottom:1px solid var(--borda);}
+  aside .marca{font-size:20px; padding:6px 10px;} aside .slogan{display:none;}
+  nav{grid-column:1/-1; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; margin:0 -12px; padding:0 12px 2px;} nav::-webkit-scrollbar{display:none;}
+  nav button{flex:none; white-space:nowrap; gap:8px; padding:8px 12px; border-left:0; border-bottom:3px solid transparent; border-radius:10px 10px 0 0;} nav button.on{border-bottom-color:var(--acento);}
+  nav .ic{width:22px; height:22px; font-size:12px;}
+  .eu{gap:8px; grid-row:1; grid-column:2;} .eu .quem b{display:none;} .eu .av{--t:36px;} .eu .btn.mini{min-height:40px; padding:8px 12px;}
+  #bt-foto{font-size:0;} #bt-foto::after{content:'Foto'; font-size:13px;}
+  main{padding:18px 16px 60px;} .perg{margin-bottom:16px;} .marco select{grid-column:2; justify-self:start; width:auto; min-width:170px;}
+  .btn{min-height:44px;} .btn.mini{min-height:40px; padding:8px 13px;} .filtros button{min-height:40px;}
+  .lnk{display:inline-block; padding:10px 4px;} .lg-troca{margin:-6px 0 !important;}
+  input,select,textarea{font-size:16px; min-height:44px;}
+  .fio{padding:14px;} .fio-cab{flex-wrap:wrap; gap:8px 12px;} .fio-cab .tx{flex:1 1 calc(100% - 52px);} .fio-cab>.tag:nth-child(3){margin-left:52px;}
+  .resp{margin-left:0;} .fio-acoes textarea{flex-basis:100%;}
+  .pessoa{grid-template-columns:1fr 1fr; gap:10px;} .pessoa>.quem{grid-column:1/-1;} .pessoa>.tag{grid-column:1/-1; justify-self:start;} .pessoa select{width:100%;}
+  .quem>span{min-width:0;} .quem small{overflow-wrap:anywhere;}
+  .rolar-x:has(.arq-tab){overflow:visible;} .arq-tab thead{display:none;} .arq-tab,.arq-tab tbody{display:block;}
+  .arq-tab tr{display:grid; grid-template-columns:1fr auto; gap:8px 10px; align-items:center; padding:12px 0; border-bottom:1px solid var(--borda);} .arq-tab tr:last-child{border-bottom:0;}
+  .arq-tab td{padding:0; border:0;} .arq-tab td:first-child{grid-column:1/-1; overflow-wrap:anywhere;} .arq-tab .arq-ac{grid-column:1/-1; text-align:left !important; display:flex; gap:8px;} .arq-tab .arq-ac .btn{flex:1;}
+}
 </style>
 </head>
 <body>
@@ -260,8 +281,8 @@ function tArquivos() {
   const L = D.arquivos;
   return `<div class="topo"><h1>Arquivos</h1></div><p class="perg">Relatórios, extratos, prints e documentos do projeto. Todos os liberados veem.</p>`
     + `<div class="solta" id="solta" tabindex="0"><b>Arraste um arquivo aqui</b> ou clique para escolher<br><small>Até 20 MB por arquivo. Fica no armazenamento privado do projeto.</small></div><input type="file" id="in-arq" hidden>`
-    + `<section class="cartao" style="margin-top:16px"><h3>${L.length} arquivo${L.length === 1 ? '' : 's'}</h3>` + (L.length ? `<div class="rolar-x"><table><thead><tr><th>Arquivo</th><th>Tipo</th><th>Enviado por</th><th>Quando</th><th>Tamanho</th><th></th></tr></thead><tbody>`
-    + L.map(a => `<tr><td><b>${esc(a.nome)}</b></td><td><span class="tag az">${esc(a.tipo)}</span></td><td>${quem(U(a.de), '', 'p')}</td><td class="mono">${quando(a.em)}</td><td class="mono">${tam(a.tam)}</td><td style="text-align:right; white-space:nowrap">`
+    + `<section class="cartao" style="margin-top:16px"><h3>${L.length} arquivo${L.length === 1 ? '' : 's'}</h3>` + (L.length ? `<div class="rolar-x"><table class="arq-tab"><thead><tr><th>Arquivo</th><th>Tipo</th><th>Enviado por</th><th>Quando</th><th>Tamanho</th><th></th></tr></thead><tbody>`
+    + L.map(a => `<tr><td><b>${esc(a.nome)}</b></td><td class="arq-tipo"><span class="tag az">${esc(a.tipo)}</span></td><td>${quem(U(a.de), '', 'p')}</td><td class="mono">${quando(a.em)}</td><td class="mono">${tam(a.tam)}</td><td class="arq-ac" style="text-align:right; white-space:nowrap">`
       + `<button class="btn mini" data-baixar="${a.id}">Baixar</button> <button class="btn mini" data-apaga="${a.id}">Excluir</button></td></tr>`).join('') + '</tbody></table></div>' : '<small>Nenhum arquivo ainda.</small>') + '</section>';
 }
 function tAcessos() {
@@ -280,6 +301,7 @@ function pintar() {
   if (TELA === 'acessos' && !admin()) TELA = 'andamento';
   document.querySelectorAll('[data-so-admin]').forEach(e => e.hidden = !admin());
   document.querySelectorAll('#menu [data-tela]').forEach(b => b.classList.toggle('on', b.dataset.tela === TELA));
+  const sel = $('#menu .on'); if (sel && innerWidth <= 1000) sel.scrollIntoView({ block: 'nearest', inline: 'nearest' });   // no celular o menu rola de lado: a tela aberta fica à vista
   const ab = D.duvidas.filter(d => d.st === 'aberta').length, pe = D.usuarios.filter(u => u.status === 'pendente').length, pm = D.pendencias.filter(p => !p.ok && p.para === EU.id).length;
   $('#n-duv').hidden = !ab; $('#n-duv').textContent = ab; $('#n-pen').hidden = !pm; $('#n-pen').textContent = pm; $('#n-pend').hidden = !pe; $('#n-pend').textContent = pe;
   $('#eu').innerHTML = quem(EU); $('#conteudo').innerHTML = TELAS[TELA]();
