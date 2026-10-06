@@ -45,6 +45,7 @@ small,.sub{color:var(--fg-3);} .mono{font-family:var(--mono); font-size:13px;}
 .login-cx h1{margin:6px 0 0; font-size:22px;} .login-cx p{margin:0; color:var(--fg-2); font-size:14px;}
 .login-col{width:min(420px,100%); display:grid; gap:14px;} .lg-form{display:grid; gap:14px;} .lg-troca{font-size:13.5px !important; text-align:center;}
 .lnk{border:0; background:none; padding:0; color:var(--acento); font-weight:600; cursor:pointer; text-decoration:underline; text-underline-offset:3px;}
+.senha{position:relative; display:block;} .senha input{padding-right:52px;} .olho{position:absolute; right:4px; top:50%; transform:translateY(-50%); width:44px; height:40px; border:0; background:none; border-radius:8px; cursor:pointer; font-size:18px; line-height:1;} .olho:hover{background:var(--painel);}
 .lg-erro{color:var(--neg) !important; font-weight:600; font-size:13.5px !important;} .lg-erro.ok{color:var(--pos) !important;} #bt-reenviar{justify-self:start;}
 #lg-demo button{border:0; background:none; padding:0 2px; color:var(--ouro); font-weight:700; cursor:pointer; text-decoration:underline; text-underline-offset:3px;}
 .proto{border:1px dashed color-mix(in srgb,var(--ouro) 45%,transparent); color:var(--fg-3); border-radius:10px; padding:8px 12px; font-size:12.5px; text-align:center;}
@@ -138,7 +139,7 @@ table{width:100%; border-collapse:collapse;} th{font:500 12.5px var(--mono); col
       <form id="lg-entrar" class="lg-form">
         <div><h1>Entrar</h1><p>Acompanhe o andamento, as pendências e as dúvidas do projeto.</p></div>
         <label class="campo">E-mail<input id="lg-email" type="email" placeholder="voce@empresa.com.br" autocomplete="username" required></label>
-        <label class="campo">Senha<input id="lg-senha" type="password" placeholder="Sua senha" autocomplete="current-password" required></label>
+        <label class="campo">Senha<span class="senha"><input id="lg-senha" type="password" placeholder="Sua senha" autocomplete="current-password" required><button type="button" class="olho" data-olho="lg-senha" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha">👁</button></span></label>
         <p class="lg-erro" id="lg-erro" hidden></p>
         <button type="button" class="lnk" id="bt-reenviar" hidden>Reenviar o e-mail de confirmação</button>
         <button class="btn ouro" type="submit">Entrar</button>
@@ -148,7 +149,8 @@ table{width:100%; border-collapse:collapse;} th{font:500 12.5px var(--mono); col
         <div><h1>Solicitar acesso</h1><p>Preencha seus dados. Depois que o responsável do projeto liberar, é só entrar com este e-mail e esta senha.</p></div>
         <label class="campo">Nome<input id="pd-nome" placeholder="Como você quer aparecer" autocomplete="name" required></label>
         <label class="campo">E-mail<input id="pd-email" type="email" placeholder="voce@empresa.com.br" autocomplete="username" required></label>
-        <label class="campo">Crie uma senha<input id="pd-senha" type="password" placeholder="Mínimo de 8 caracteres" autocomplete="new-password" minlength="8" required></label>
+        <label class="campo">Crie uma senha<span class="senha"><input id="pd-senha" type="password" placeholder="Mínimo de 8 caracteres" autocomplete="new-password" minlength="8" required><button type="button" class="olho" data-olho="pd-senha" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha">👁</button></span></label>
+        <label class="campo">Confirme a senha<span class="senha"><input id="pd-senha2" type="password" placeholder="Digite a mesma senha" autocomplete="new-password" minlength="8" required><button type="button" class="olho" data-olho="pd-senha2" aria-label="Mostrar senha" aria-pressed="false" title="Mostrar senha">👁</button></span></label>
         <p class="lg-erro" id="pd-erro" hidden></p>
         <button class="btn ouro" type="submit">Enviar pedido</button>
         <p class="lg-troca">Já tem acesso? <button type="button" class="lnk" data-lg-modo="entrar">Entrar</button></p>
@@ -433,7 +435,7 @@ document.addEventListener('change', async e => { const el = e.target;
 
 /* ================= login ================= */
 let erroUrlMostrado = false;
-function lgModo(m) { ['entrar', 'pedir', 'ok', 'espera'].forEach(k => $('#lg-' + k).hidden = m !== k); $('#lg-erro').hidden = $('#pd-erro').hidden = $('#bt-reenviar').hidden = true;
+function lgModo(m) { document.querySelectorAll('[data-olho]').forEach(b => { const i = document.getElementById(b.dataset.olho); if (i.type === 'text') b.click(); }); ['entrar', 'pedir', 'ok', 'espera'].forEach(k => $('#lg-' + k).hidden = m !== k); $('#lg-erro').hidden = $('#pd-erro').hidden = $('#bt-reenviar').hidden = true;
   if (m === 'entrar' && ERRO_URL && !erroUrlMostrado) { erroUrlMostrado = true; history.replaceState(null, '', location.pathname);   // o link de confirmação voltou com erro
     lgErro('#lg-erro', ERRO_URL === 'otp_expired' ? 'O link de confirmação expirou (ele vale 1 hora). Digite seu e-mail e peça um novo abaixo.' : 'Não foi possível confirmar o e-mail por este link. Digite seu e-mail e peça um novo abaixo.'); $('#bt-reenviar').hidden = false; }
   if (m === 'espera') $('#lg-espera-tx').textContent = EU && EU.status === 'bloqueado' ? 'Seu acesso está bloqueado. Fale com o responsável do projeto.' : 'Seu cadastro está feito e aguarda liberação pelo responsável do projeto. Quando for liberado, é só entrar de novo.';
@@ -446,12 +448,16 @@ document.addEventListener('click', async e => { const b = e.target.closest('#bt-
   b.disabled = true; const r = await sb.auth.resend({ type: 'signup', email, options: { emailRedirectTo: location.origin + location.pathname } }); b.disabled = false;
   if (r.error) lgErro('#lg-erro', /rate|seconds|limit/i.test(r.error.message) ? 'Muitos e-mails em pouco tempo. Espere alguns minutos e tente de novo.' : 'Não foi possível reenviar: ' + r.error.message);
   else { lgErro('#lg-erro', `Enviamos um novo link para ${email}. Abra em até 1 hora (veja também o spam).`, true); b.hidden = true; } });
+document.addEventListener('click', e => { const b = e.target.closest('[data-olho]'); if (!b) return;
+  const i = document.getElementById(b.dataset.olho), ver = i.type === 'password'; i.type = ver ? 'text' : 'password';
+  b.setAttribute('aria-pressed', String(ver)); b.setAttribute('aria-label', ver ? 'Ocultar senha' : 'Mostrar senha'); b.title = b.getAttribute('aria-label'); b.textContent = ver ? '🙈' : '👁'; i.focus(); });
 document.addEventListener('submit', async e => { e.preventDefault(); const b = e.target.querySelector('button[type="submit"]'); if (b) b.disabled = true;
   try {
     if (e.target.id === 'lg-entrar') { const r = await sb.auth.signInWithPassword({ email: $('#lg-email').value.trim(), password: $('#lg-senha').value });
       if (r.error) { lgErro('#lg-erro', ERROS[r.error.message] || 'Não foi possível entrar: ' + r.error.message); $('#bt-reenviar').hidden = r.error.message !== 'Email not confirmed'; } }
     if (e.target.id === 'lg-pedir') { const nome = $('#pd-nome').value.trim(), email = $('#pd-email').value.trim(), senha = $('#pd-senha').value;
       if (!nome) return lgErro('#pd-erro', 'Informe seu nome.'); if (senha.length < 8) return lgErro('#pd-erro', 'A senha precisa de pelo menos 8 caracteres.');
+      if (senha !== $('#pd-senha2').value) { $('#pd-senha2').focus(); return lgErro('#pd-erro', 'As duas senhas não são iguais. Digite de novo a confirmação.'); }
       if (!(await confirmar(`Enviar o pedido de acesso de ${nome}?`))) return;
       const r = await sb.auth.signUp({ email, password: senha, options: { data: { nome }, emailRedirectTo: location.origin + location.pathname } });
       if (r.error) return lgErro('#pd-erro', ERROS[r.error.message] || 'Não foi possível enviar: ' + r.error.message);
