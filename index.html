@@ -101,6 +101,10 @@ main{padding:26px clamp(16px,3vw,36px) 60px; min-width:0;}
 .sp-item:hover{background:var(--painel-2);} .sp-item.nova{color:var(--fg); background:rgba(220,174,94,.07);} .sp-item.nova b::before{content:'● '; color:var(--acento);}
 .sp-item small{display:block; color:var(--fg-3); margin-top:2px;} .sp-item i{font-style:normal; color:var(--fg);} .sp-vazio{color:var(--fg-3); padding:10px 8px; margin:0;}
 .marcar{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:8px;} .marcar small{color:var(--fg-3); margin-right:2px;} .dest.mini{padding:2px 10px 2px 2px; min-height:34px; font-size:13px;} .dest.mini .av{--t:24px;}
+.reacoes{display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; align-items:center;}
+.reac{border:1px solid var(--borda-forte); background:var(--painel); border-radius:999px; padding:2px 10px; min-height:32px; cursor:pointer; font-size:14px; color:var(--fg-2); display:inline-flex; align-items:center; gap:4px;}
+.reac b{font-size:12.5px;} .reac.minha{border-color:var(--acento); background:rgba(220,174,94,.14); color:var(--fg);} .reac.add{color:var(--fg-3); font-size:13px;} .reac:hover{border-color:var(--acento);}
+.reac-sel{display:inline-flex; gap:4px; padding:2px; border:1px solid var(--borda-forte); border-radius:999px; background:var(--painel-2);} .reac-sel .reac{border-color:transparent; background:none; font-size:17px;}
 .mencoes{display:block; color:var(--azul); margin-top:4px; font-weight:600;} .pendc.destaque{box-shadow:0 0 0 3px var(--acento); transition:box-shadow .3s;}
 .resp .apagar{margin-left:auto; align-self:flex-start; font-size:12.5px; color:var(--fg-3); min-height:40px;} .resp.apagado{border-left-color:var(--borda-forte); color:var(--fg-3); font-style:italic;} .pendc.editando h4{margin:0 0 12px;}
 /* arquivos */
@@ -125,6 +129,7 @@ table{width:100%; border-collapse:collapse;} th{font:500 12.5px var(--mono); col
   nav .ic{width:22px; height:22px; font-size:12px;}
   .eu{gap:8px; grid-row:1; grid-column:2;} .eu .quem b{display:none;} .eu .av{--t:36px;} .eu .btn.mini{min-height:40px; padding:8px 12px;}
   #bt-foto{display:none;} .eu .av{cursor:pointer;} .sino{min-width:44px;}
+  .reac{min-height:40px; padding:4px 12px;} .reac-sel{flex-wrap:wrap;}
   #sino-painel{left:16px; right:16px; top:70px; bottom:auto; width:auto; max-height:calc(100vh - 90px);} .dest.mini{min-height:40px;}
   html{scroll-padding-top:130px;} main{padding:18px 16px 60px;} .perg{margin-bottom:16px;} .marco select{grid-column:2; justify-self:start; width:auto; min-width:170px;}
   .btn{min-height:44px;} .btn.mini{min-height:40px; padding:8px 13px;} .filtros button{min-height:40px;}
@@ -237,7 +242,7 @@ const nomeSeguro = n => n.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w
 
 /* ================= leitura ================= */
 async function carregar() {
-  const [p, m, pe, du, re, ar, co, nt] = await Promise.all([
+  const [p, m, pe, du, re, ar, co, nt, rc] = await Promise.all([
     sb.from('perfis').select('id,nome,email,papel,status,cor,foto').order('criado_em'),
     sb.from('marcos').select('*').order('ordem'),
     sb.from('pendencias').select('*').order('em', { ascending: false }),
@@ -245,12 +250,13 @@ async function carregar() {
     sb.from('respostas').select('*').order('em'),
     sb.from('arquivos').select('*').order('em', { ascending: false }),
     sb.from('pend_comentarios').select('*').order('em'),
-    sb.from('notificacoes').select('*').order('em', { ascending: false }).limit(60)]);
+    sb.from('notificacoes').select('*').order('em', { ascending: false }).limit(60),
+    sb.from('pend_reacoes').select('*').order('em')]);
   const perfis = ok_(p) || [], fotos = perfis.filter(x => x.foto).map(x => x.foto), urls = {};
   if (fotos.length) { const s = await sb.storage.from('fotos').createSignedUrls(fotos, 3600); (s.data || []).forEach(x => { if (x.signedUrl) urls[x.path] = x.signedUrl; }); }
   D.usuarios = perfis.map(x => ({ ...x, foto: x.foto ? urls[x.foto] || '' : '', fotoPath: x.foto }));
   D.marcos = ok_(m) || []; D.arquivos = ok_(ar) || [];
-  const coms = ok_(co) || []; D.avisos = ok_(nt) || [];
+  const reac = ok_(rc) || [], coms = (ok_(co) || []).map(c => ({ ...c, reacoes: reac.filter(x => x.comentario_id === c.id) })); D.avisos = ok_(nt) || [];
   D.pendencias = (ok_(pe) || []).map(x => ({ ...x, okEm: x.ok_em, paras: x.paras || [], aguarda: x.aguarda || [], anexos: x.anexos || [], coms: coms.filter(c => c.pendencia_id === x.id) }));
   const resp = ok_(re) || []; D.duvidas = (ok_(du) || []).map(d => ({ ...d, resp: resp.filter(r => r.duvida_id === d.id) }));
   EU = SESSAO ? D.usuarios.find(u => u.id === SESSAO.user.id) || null : null;
@@ -273,6 +279,16 @@ const dia = iso => iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) : '';
 const AREAS = { inox: ['InoxTudo', 'O que a InoxTudo precisa enviar ou responder para o projeto andar.'],
   dev: ['Nossas', 'Nossas pendências de desenvolvimento. Só os Devs veem.'],
   backend: ['Backend · Supabase', 'O que sobe para o Supabase depois. Só os Devs veem.'] };
+/* Reações nos comentários (06/10/2026): tocar alterna a sua; o autor do comentário recebe aviso no sino (criado pelo banco).
+   Reagir não pede confirmação (como marcar aviso como lido): é um toque que se desfaz com outro toque. */
+const EMOJIS = ['👍', '❤️', '😂', '🎉', '👀', '✅']; let REAGINDO = null;   // comentário com o seletor aberto
+function reacoesHtml(c) {
+  const grupos = EMOJIS.map(e => [e, (c.reacoes || []).filter(r => r.emoji === e)]).filter(([, l]) => l.length);
+  return `<div class="reacoes">${grupos.map(([e, l]) => { const minha = l.some(r => r.de === EU.id), nomes = l.map(r => U(r.de).nome).join(', ');
+      return `<button class="reac${minha ? ' minha' : ''}" data-reagir="${c.id}" data-emoji="${e}" title="${esc(nomes)}" aria-label="${e} ${l.length}: ${esc(nomes)}${minha ? ' (tocar tira a sua)' : ''}">${e} <b>${l.length}</b></button>`; }).join('')}`
+    + `<button class="reac add" data-reac-abrir="${c.id}" aria-label="Reagir" aria-expanded="${REAGINDO === c.id}" title="Reagir">☺＋</button>`
+    + (REAGINDO === c.id ? `<span class="reac-sel">${EMOJIS.map(e => `<button class="reac" data-reagir="${c.id}" data-emoji="${e}" aria-label="Reagir com ${e}">${e}</button>`).join('')}</span>` : '') + '</div>';
+}
 /** Quem pode ser marcado num comentário: quem enxerga a pendência (InoxTudo: todo liberado; Nossas/Backend: só Devs), menos você. */
 const marcaveis = p => D.usuarios.filter(u => u.status === 'liberado' && u.id !== EU.id && (p.area === 'inox' || u.papel === 'dev'));
 const meu = p => p.paras.includes(EU.id), TIPO = { info: 'Informação', arquivo: 'Arquivo', tarefa: 'Tarefa' };
@@ -318,7 +334,7 @@ function tPendencias() {
       + (p.ok ? `<span class="tag ok cheia">✓ ${p.tipo === 'tarefa' ? 'Concluída' : 'Resolvida'}</span>` : p.prazo ? `<span class="tag ${atr ? 'at' : 'ab'}">${atr ? 'Atrasada · ' : 'até '}${dia(p.prazo)}</span>` : '<span class="tag">sem prazo</span>') + '</span></div>'
       + p.coms.map(c => { const u = U(c.de);
           if (c.apagado_em) return `<div class="resp apagado"><span class="q">🗑 Comentário de <b>${esc(u.nome)}</b> apagado por ${esc(U(c.apagado_por).nome)} em ${quando(c.apagado_em)}</span></div>`;
-          return `<div class="resp" style="--c:${esc(u.cor)}">${av(u, 'p')}<div><span class="q"><b>${esc(u.nome)}</b> <small>· ${quando(c.em)}</small></span><p>${esc(c.tx)}</p>${(c.mencoes || []).length ? `<small class="mencoes">${c.mencoes.map(id => '@' + esc(U(id).nome)).join(' ')}</small>` : ''}</div>`
+          return `<div class="resp" style="--c:${esc(u.cor)}">${av(u, 'p')}<div><span class="q"><b>${esc(u.nome)}</b> <small>· ${quando(c.em)}</small></span><p>${esc(c.tx)}</p>${(c.mencoes || []).length ? `<small class="mencoes">${c.mencoes.map(id => '@' + esc(U(id).nome)).join(' ')}</small>` : ''}${reacoesHtml(c)}</div>`
             + (c.de === EU.id || admin() ? `<button class="lnk apagar" data-com-rm="${c.id}" aria-label="Apagar comentário">Apagar</button>` : '') + '</div>'; }).join('')
       + (anx.length ? `<div class="anx">${anx.map(a => `<button class="btn mini" data-baixar="${a.id}" title="Baixar">📎 ${esc(a.nome)}</button>`).join('')}</div>` : '')
       + `<div class="fio-acoes"><textarea data-com-tx="${p.id}" maxlength="4000" placeholder="Comentar…"></textarea><button class="btn mini" data-com="${p.id}">Comentar</button></div>`
@@ -370,7 +386,9 @@ function pintar() {
   const sel = $('#menu .on'); if (sel && innerWidth <= 1000) sel.scrollIntoView({ block: 'nearest', inline: 'nearest' });   // no celular o menu rola de lado: a tela aberta fica à vista
   const ab = D.duvidas.filter(d => d.st === 'aberta').length, pe = D.usuarios.filter(u => u.status === 'pendente').length, pm = D.pendencias.filter(p => !p.ok && p.paras.includes(EU.id)).length;
   $('#n-duv').hidden = !ab; $('#n-duv').textContent = ab; $('#n-pen').hidden = !pm; $('#n-pen').textContent = pm; $('#n-pend').hidden = !pe; $('#n-pend').textContent = pe;
+  const rasc = [...document.querySelectorAll('[data-com-tx]')].filter(x => x.value).map(x => [x.dataset.comTx, x.value]), foco = document.activeElement && document.activeElement.dataset && document.activeElement.dataset.comTx;
   $('#eu').innerHTML = quem(EU); $('#conteudo').innerHTML = TELAS[TELA](); pintarSino();
+  rasc.forEach(([id, v]) => { const x = document.querySelector(`[data-com-tx="${id}"]`); if (x) { x.value = v; if (foco === id) x.focus(); } });   // rascunho de comentário sobrevive ao redesenho
   if (!canalAvisos) ouvirAvisos();
 }
 
@@ -382,8 +400,8 @@ function pintarSino() {
   const n = D.avisos.filter(a => !a.lida_em).length; $('#n-sino').hidden = !n; $('#n-sino').textContent = n;
   if ($('#sino-painel').hidden) return;
   $('#sino-lista').innerHTML = D.avisos.length ? D.avisos.map(a => { const de = U(a.de), pd = D.pendencias.find(x => x.id === a.pendencia_id);
-    return `<button class="sp-item${a.lida_em ? '' : ' nova'}" data-aviso="${a.id}">${av(de, 'p')}<span><b>${esc(de.nome)}</b> marcou você em <i>${esc(pd ? pd.tx.slice(0, 90) + (pd.tx.length > 90 ? '…' : '') : 'uma pendência')}</i><small>${quando(a.em)}</small></span></button>`; }).join('')
-    : '<p class="sp-vazio">Nenhum aviso ainda. Quando alguém marcar você num comentário, aparece aqui.</p>';
+    return `<button class="sp-item${a.lida_em ? '' : ' nova'}" data-aviso="${a.id}">${av(de, 'p')}<span><b>${esc(de.nome)}</b> ${a.tipo === 'reacao' ? `reagiu ${esc(a.emoji || '')} ao seu comentário em` : 'marcou você em'} <i>${esc(pd ? pd.tx.slice(0, 90) + (pd.tx.length > 90 ? '…' : '') : 'uma pendência')}</i><small>${quando(a.em)}</small></span></button>`; }).join('')
+    : '<p class="sp-vazio">Nenhum aviso ainda. Quando alguém marcar você ou reagir a um comentário seu, aparece aqui.</p>';
   $('#bt-lidas').hidden = !D.avisos.some(a => !a.lida_em);
 }
 function abrirSino(abre) { $('#sino-painel').hidden = !abre; $('#bt-sino').setAttribute('aria-expanded', String(abre)); pintarSino(); }
@@ -392,10 +410,11 @@ let canalAvisos = null;
 function ouvirAvisos() {
   if (canalAvisos) { sb.removeChannel(canalAvisos); canalAvisos = null; }
   if (!SESSAO || !EU || EU.status !== 'liberado' || !sb.channel) return;
-  canalAvisos = sb.channel('avisos-' + EU.id).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificacoes', filter: `para=eq.${EU.id}` }, async () => {
+  canalAvisos = sb.channel('avisos-' + EU.id).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificacoes', filter: `para=eq.${EU.id}` }, async ev => {
     // só o sino e as pendências recarregam: a tela não é redesenhada para não apagar o que a pessoa está digitando
-    const r = await sb.from('pend_comentarios').select('*').order('em'); if (!r.error) { const cs = r.data || []; D.pendencias.forEach(p => p.coms = cs.filter(c => c.pendencia_id === p.id)); }
-    await recarregarAvisos(); aviso('🔔 Você foi marcado num comentário'); }).subscribe();
+    const [r, rr] = await Promise.all([sb.from('pend_comentarios').select('*').order('em'), sb.from('pend_reacoes').select('*').order('em')]);
+    if (!r.error && !rr.error) { const rs = rr.data || [], cs = (r.data || []).map(c => ({ ...c, reacoes: rs.filter(x => x.comentario_id === c.id) })); D.pendencias.forEach(p => p.coms = cs.filter(c => c.pendencia_id === p.id)); }
+    const n = ev && ev.new; await recarregarAvisos(); aviso(n && n.tipo === 'reacao' ? `🔔 ${U(n.de).nome} reagiu ${n.emoji || ''} ao seu comentário` : '🔔 Você foi marcado num comentário'); }).subscribe();
 }
 
 /* ================= ações ================= */
@@ -460,6 +479,11 @@ document.addEventListener('click', async e => { const t = s => e.target.closest(
     const mencoes = [...document.querySelectorAll(`input[name="men-${id}"]:checked`)].map(x => x.value);
     grava(mencoes.length ? `Publicar o comentário e avisar ${juntar(mencoes.map(u => U(u).nome))}?` : 'Publicar este comentário?',
       async () => ok_(await sb.from('pend_comentarios').insert({ pendencia_id: id, de: EU.id, tx, mencoes })), mencoes.length ? 'Comentário publicado e aviso enviado' : 'Comentário publicado'); return; }
+  const ra = t('[data-reac-abrir]'); if (ra) { REAGINDO = REAGINDO === ra.dataset.reacAbrir ? null : ra.dataset.reacAbrir; pintar(); return; }
+  const rg = t('[data-reagir]'); if (rg) { const cid = rg.dataset.reagir, emoji = rg.dataset.emoji; REAGINDO = null;
+    const c = D.pendencias.flatMap(p => p.coms).find(x => x.id === cid), minha = c && c.reacoes.find(r => r.de === EU.id && r.emoji === emoji);
+    const r = minha ? await sb.from('pend_reacoes').delete().eq('id', minha.id) : await sb.from('pend_reacoes').insert({ comentario_id: cid, de: EU.id, emoji });
+    if (r.error) aviso('Não foi possível gravar: ' + r.error.message); await carregar().catch(() => {}); pintar(); return; }
   const cr = t('[data-com-rm]'); if (cr) {
     grava('Apagar este comentário? O texto some e fica o registro de quem apagou e quando.', async () => ok_(await sb.from('pend_comentarios').update({ tx: null, apagado_por: EU.id, apagado_em: new Date().toISOString() }).eq('id', cr.dataset.comRm)), 'Comentário apagado'); return; }
   const pi = t('[data-pend-imp]'); if (pi) { const p = D.pendencias.find(x => x.id === pi.dataset.pendImp);
