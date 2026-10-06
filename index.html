@@ -45,7 +45,7 @@ small,.sub{color:var(--fg-3);} .mono{font-family:var(--mono); font-size:13px;}
 .login-cx h1{margin:6px 0 0; font-size:22px;} .login-cx p{margin:0; color:var(--fg-2); font-size:14px;}
 .login-col{width:min(420px,100%); display:grid; gap:14px;} .lg-form{display:grid; gap:14px;} .lg-troca{font-size:13.5px !important; text-align:center;}
 .lnk{border:0; background:none; padding:0; color:var(--acento); font-weight:600; cursor:pointer; text-decoration:underline; text-underline-offset:3px;}
-.lg-erro{color:var(--neg) !important; font-weight:600; font-size:13.5px !important;}
+.lg-erro{color:var(--neg) !important; font-weight:600; font-size:13.5px !important;} .lg-erro.ok{color:var(--pos) !important;} #bt-reenviar{justify-self:start;}
 #lg-demo button{border:0; background:none; padding:0 2px; color:var(--ouro); font-weight:700; cursor:pointer; text-decoration:underline; text-underline-offset:3px;}
 .proto{border:1px dashed color-mix(in srgb,var(--ouro) 45%,transparent); color:var(--fg-3); border-radius:10px; padding:8px 12px; font-size:12.5px; text-align:center;}
 
@@ -132,6 +132,7 @@ table{width:100%; border-collapse:collapse;} th{font:500 12.5px var(--mono); col
         <label class="campo">E-mail<input id="lg-email" type="email" placeholder="voce@empresa.com.br" autocomplete="username" required></label>
         <label class="campo">Senha<input id="lg-senha" type="password" placeholder="Sua senha" autocomplete="current-password" required></label>
         <p class="lg-erro" id="lg-erro" hidden></p>
+        <button type="button" class="lnk" id="bt-reenviar" hidden>Reenviar o e-mail de confirmação</button>
         <button class="btn ouro" type="submit">Entrar</button>
         <p class="lg-troca">Ainda não tem acesso? <button type="button" class="lnk" data-lg-modo="pedir">Solicitar acesso</button></p>
       </form>
@@ -144,7 +145,7 @@ table{width:100%; border-collapse:collapse;} th{font:500 12.5px var(--mono); col
         <button class="btn ouro" type="submit">Enviar pedido</button>
         <p class="lg-troca">Já tem acesso? <button type="button" class="lnk" data-lg-modo="entrar">Entrar</button></p>
       </form>
-      <div id="lg-ok" class="lg-form" hidden><div><h1>Pedido enviado</h1><p>Enviamos um e-mail para você confirmar o endereço. Depois de confirmar, o acesso é liberado pelo responsável do projeto e você entra com o e-mail e a senha que criou.</p></div>
+      <div id="lg-ok" class="lg-form" hidden><div><h1>Pedido enviado</h1><p>Enviamos um e-mail para você confirmar o endereço: abra o link <b>em até 1 hora</b>. Depois de confirmar, o acesso é liberado pelo responsável do projeto e você entra com o e-mail e a senha que criou.</p></div>
         <button class="btn" type="button" data-lg-modo="entrar">Voltar para Entrar</button></div>
       <div id="lg-espera" class="lg-form" hidden><div><h1>Aguardando liberação</h1><p id="lg-espera-tx"></p></div>
         <button class="btn" type="button" id="bt-sair-espera">Sair</button></div>
@@ -183,6 +184,7 @@ table{width:100%; border-collapse:collapse;} th{font:500 12.5px var(--mono); col
    só o Dev muda nível e acesso de outra pessoa (e ninguém muda o próprio). Fotos e arquivos ficam em armazenamento PRIVADO,
    entregues por link temporário. A chave de administração NUNCA entra aqui. */
 const SUPA_URL = 'https://kopudvjyxtcwkdulxosb.supabase.co', SUPA_CHAVE = 'sb_publishable_T3dM1MEVWG1iYlDFnvZLjw_659wCKxB';
+const ERRO_URL = (() => { const q = new URLSearchParams(location.hash.slice(1) || location.search.slice(1)); return q.get('error_code') || q.get('error') || ''; })();
 const sb = window.supabase.createClient(SUPA_URL, SUPA_CHAVE, { auth: { persistSession: true, autoRefreshToken: true } });
 
 let D = { usuarios: [], marcos: [], pendencias: [], duvidas: [], arquivos: [] }, EU = null, SESSAO = null, TELA = 'andamento', FILTRO = 'todas', FPEND = 'abertas';
@@ -358,16 +360,24 @@ document.addEventListener('change', async e => { const el = e.target;
 ['dragover', 'dragleave', 'drop'].forEach(ev => document.addEventListener(ev, e => { const s = e.target.closest && e.target.closest('#solta'); if (!s) return; e.preventDefault(); s.classList.toggle('sobre', ev === 'dragover'); if (ev === 'drop') enviarArquivo(e.dataTransfer.files[0]); }));
 
 /* ================= login ================= */
-function lgModo(m) { ['entrar', 'pedir', 'ok', 'espera'].forEach(k => $('#lg-' + k).hidden = m !== k); $('#lg-erro').hidden = $('#pd-erro').hidden = true;
+let erroUrlMostrado = false;
+function lgModo(m) { ['entrar', 'pedir', 'ok', 'espera'].forEach(k => $('#lg-' + k).hidden = m !== k); $('#lg-erro').hidden = $('#pd-erro').hidden = $('#bt-reenviar').hidden = true;
+  if (m === 'entrar' && ERRO_URL && !erroUrlMostrado) { erroUrlMostrado = true; history.replaceState(null, '', location.pathname);   // o link de confirmação voltou com erro
+    lgErro('#lg-erro', ERRO_URL === 'otp_expired' ? 'O link de confirmação expirou (ele vale 1 hora). Digite seu e-mail e peça um novo abaixo.' : 'Não foi possível confirmar o e-mail por este link. Digite seu e-mail e peça um novo abaixo.'); $('#bt-reenviar').hidden = false; }
   if (m === 'espera') $('#lg-espera-tx').textContent = EU && EU.status === 'bloqueado' ? 'Seu acesso está bloqueado. Fale com o responsável do projeto.' : 'Seu cadastro está feito e aguarda liberação pelo responsável do projeto. Quando for liberado, é só entrar de novo.';
   const f = m === 'entrar' ? $('#lg-email') : m === 'pedir' ? $('#pd-nome') : null; if (f) f.focus(); }
-const lgErro = (id, t) => { const e = $(id); e.textContent = t; e.hidden = false; };
-const ERROS = { 'Invalid login credentials': 'E-mail ou senha incorretos.', 'Email not confirmed': 'Confirme o seu e-mail pelo link que enviamos antes de entrar.',
+const lgErro = (id, t, ok) => { const e = $(id); e.textContent = t; e.classList.toggle('ok', !!ok); e.hidden = false; };
+const ERROS = { 'Invalid login credentials': 'E-mail ou senha incorretos.', 'Email not confirmed': 'Seu e-mail ainda não foi confirmado. Abra o link que enviamos (vale 1 hora) ou peça um novo abaixo.',
   'User already registered': 'Este e-mail já tem cadastro. Use "Entrar".' };
+document.addEventListener('click', async e => { const b = e.target.closest('#bt-reenviar'); if (!b) return;
+  const email = $('#lg-email').value.trim(); if (!/^\S+@\S+\.\S+$/.test(email)) { lgErro('#lg-erro', 'Digite o seu e-mail no campo acima.'); $('#lg-email').focus(); return; }
+  b.disabled = true; const r = await sb.auth.resend({ type: 'signup', email, options: { emailRedirectTo: location.origin + location.pathname } }); b.disabled = false;
+  if (r.error) lgErro('#lg-erro', /rate|seconds|limit/i.test(r.error.message) ? 'Muitos e-mails em pouco tempo. Espere alguns minutos e tente de novo.' : 'Não foi possível reenviar: ' + r.error.message);
+  else { lgErro('#lg-erro', `Enviamos um novo link para ${email}. Abra em até 1 hora (veja também o spam).`, true); b.hidden = true; } });
 document.addEventListener('submit', async e => { e.preventDefault(); const b = e.target.querySelector('button[type="submit"]'); if (b) b.disabled = true;
   try {
     if (e.target.id === 'lg-entrar') { const r = await sb.auth.signInWithPassword({ email: $('#lg-email').value.trim(), password: $('#lg-senha').value });
-      if (r.error) lgErro('#lg-erro', ERROS[r.error.message] || 'Não foi possível entrar: ' + r.error.message); }
+      if (r.error) { lgErro('#lg-erro', ERROS[r.error.message] || 'Não foi possível entrar: ' + r.error.message); $('#bt-reenviar').hidden = r.error.message !== 'Email not confirmed'; } }
     if (e.target.id === 'lg-pedir') { const nome = $('#pd-nome').value.trim(), email = $('#pd-email').value.trim(), senha = $('#pd-senha').value;
       if (!nome) return lgErro('#pd-erro', 'Informe seu nome.'); if (senha.length < 8) return lgErro('#pd-erro', 'A senha precisa de pelo menos 8 caracteres.');
       if (!(await confirmar(`Enviar o pedido de acesso de ${nome}?`))) return;
