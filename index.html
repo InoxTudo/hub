@@ -105,7 +105,10 @@ main{padding:26px clamp(16px,3vw,36px) 60px; min-width:0;}
 .reac{border:1px solid var(--borda-forte); background:var(--painel); border-radius:999px; padding:2px 10px; min-height:32px; cursor:pointer; font-size:14px; color:var(--fg-2); display:inline-flex; align-items:center; gap:4px;}
 .reac b{font-size:12.5px;} .reac.minha{border-color:var(--acento); background:rgba(220,174,94,.14); color:var(--fg);} .reac.add{color:var(--fg-3); font-size:13px;} .reac:hover{border-color:var(--acento);}
 .reac-sel{display:inline-flex; gap:4px; padding:2px; border:1px solid var(--borda-forte); border-radius:999px; background:var(--painel-2);} .reac-sel .reac{border-color:transparent; background:none; font-size:17px;}
-.mencoes{display:block; color:var(--azul); margin-top:4px; font-weight:600;} .pendc.destaque{box-shadow:0 0 0 3px var(--acento); transition:box-shadow .3s;}
+.nova-pend{margin-bottom:16px;} .men{color:var(--azul); font-weight:600;} .fio-acoes{position:relative;}
+#men-lista{position:absolute; left:0; top:100%; z-index:30; margin-top:4px; min-width:240px; max-width:100%; background:var(--painel); border:1px solid var(--borda-forte); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.45); padding:6px; display:grid; gap:2px;}
+#men-lista button{display:flex; align-items:center; gap:10px; width:100%; text-align:left; border:0; background:none; padding:8px 10px; border-radius:8px; cursor:pointer; color:var(--fg); font-weight:600; min-height:40px;}
+#men-lista button.on,#men-lista button:hover{background:var(--painel-2);} #men-lista small{color:var(--fg-3); font-weight:500;} .pendc.destaque{box-shadow:0 0 0 3px var(--acento); transition:box-shadow .3s;}
 .resp .apagar{margin-left:auto; align-self:flex-start; font-size:12.5px; color:var(--fg-3); min-height:40px;} .resp.apagado{border-left-color:var(--borda-forte); color:var(--fg-3); font-style:italic;} .pendc.editando h4{margin:0 0 12px;}
 /* arquivos */
 .solta{border:2px dashed var(--borda-forte); border-radius:16px; padding:22px; text-align:center; color:var(--fg-2); cursor:pointer; transition:border-color .15s, background .15s;} .solta:hover,.solta.sobre{border-color:var(--acento); background:rgba(220,174,94,.06);}
@@ -212,7 +215,7 @@ const SUPA_URL = 'https://kopudvjyxtcwkdulxosb.supabase.co', SUPA_CHAVE = 'sb_pu
 const ERRO_URL = (() => { const q = new URLSearchParams(location.hash.slice(1) || location.search.slice(1)); return q.get('error_code') || q.get('error') || ''; })();
 const sb = window.supabase.createClient(SUPA_URL, SUPA_CHAVE, { auth: { persistSession: true, autoRefreshToken: true } });
 
-let D = { usuarios: [], marcos: [], pendencias: [], duvidas: [], arquivos: [], avisos: [] }, EU = null, SESSAO = null, TELA = 'andamento', FILTRO = 'todas', FPEND = 'abertas', AREA = 'inox', EDITA = null;   // EDITA = id da pendência aberta para edição
+let D = { usuarios: [], marcos: [], pendencias: [], duvidas: [], arquivos: [], avisos: [] }, EU = null, SESSAO = null, TELA = 'andamento', FILTRO = 'todas', FPEND = 'abertas', AREA = 'inox', EDITA = null, NOVA = false;   // NOVA = formulário de nova pendência aberto   // EDITA = id da pendência aberta para edição
 const $ = s => document.querySelector(s), esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const PAPEL = { dev: 'Dev', ceo: 'CEO', equipe: 'Equipe' };
 /* Níveis (Gabriel, 05/10/2026): todo usuário liberado VÊ e EDITA tudo (cronograma, pendências, dúvidas, arquivos).
@@ -289,6 +292,37 @@ function reacoesHtml(c) {
     + `<button class="reac add" data-reac-abrir="${c.id}" aria-label="Reagir" aria-expanded="${REAGINDO === c.id}" title="Reagir">☺＋</button>`
     + (REAGINDO === c.id ? `<span class="reac-sel">${EMOJIS.map(e => `<button class="reac" data-reagir="${c.id}" data-emoji="${e}" aria-label="Reagir com ${e}">${e}</button>`).join('')}</span>` : '') + '</div>';
 }
+/* Marcar com @ (06/10/2026, como no Teams e no WhatsApp): digitar "@" no comentário abre a lista de quem pode ser marcado,
+   filtrando pelo que vem depois do @; escolher (toque, Enter ou Tab) põe "@Nome" no texto. Ao publicar, quem tem "@Nome" no texto
+   é marcado e recebe o aviso (o banco confere de novo se a pessoa pode ver a pendência). */
+const normN = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+function mencoesDoTexto(tx, p) { if (!p) return []; const T = normN(tx);
+  return marcaveis(p).sort((a, b) => b.nome.length - a.nome.length).filter(u => { const k = '@' + normN(u.nome); let i = T.indexOf(k);
+    while (i >= 0) { if (!/[\p{L}\p{N}]/u.test(T[i + k.length] || '')) return true; i = T.indexOf(k, i + 1); } return false; }).map(u => u.id); }
+function textoComMencoes(c) { let h = esc(c.tx);
+  (c.mencoes || []).map(id => U(id).nome).sort((a, b) => b.length - a.length).forEach(n => { h = h.split('@' + esc(n)).join(`<span class="men">@${esc(n)}</span>`); });
+  return h; }
+let MEN = null;   // { ta, ini, itens, sel }: lista de @ aberta
+function fecharMen() { const l = $('#men-lista'); if (l) l.remove(); MEN = null; }
+function abrirMen(ta) {
+  const p = D.pendencias.find(x => x.id === ta.dataset.comTx), ate = ta.value.slice(0, ta.selectionStart), m = ate.match(/(^|\s)@([\p{L}\p{N}._-]*)$/u);
+  if (!p || !m) { fecharMen(); return; }
+  const q = normN(m[2]), itens = marcaveis(p).filter(u => normN(u.nome).split(/\s+/).some(w => w.startsWith(q)) || normN(u.nome).startsWith(q)).slice(0, 8);
+  if (!itens.length) { fecharMen(); return; }
+  MEN = { ta, ini: ta.selectionStart - m[2].length - 1, itens, sel: MEN && MEN.ta === ta ? Math.min(MEN.sel, itens.length - 1) : 0 };
+  let l = $('#men-lista'); if (!l) { l = document.createElement('div'); l.id = 'men-lista'; l.setAttribute('role', 'listbox'); }
+  ta.insertAdjacentElement('afterend', l);
+  l.innerHTML = itens.map((u, k) => `<button type="button" role="option" aria-selected="${k === MEN.sel}" class="${k === MEN.sel ? 'on' : ''}" data-men="${u.id}">${av(u, 'p')}<span>${esc(u.nome)} <small>${PAPEL[u.papel]}</small></span></button>`).join('');
+}
+function escolherMen(id) { if (!MEN) return; const { ta, ini } = MEN, u = U(id), fim = ta.selectionStart, v = ta.value, ins = '@' + u.nome + ' ';
+  ta.value = v.slice(0, ini) + ins + v.slice(fim); const pos = ini + ins.length; fecharMen(); ta.focus(); ta.setSelectionRange(pos, pos); }
+document.addEventListener('input', e => { if (e.target.matches && e.target.matches('[data-com-tx]')) abrirMen(e.target); });
+document.addEventListener('keydown', e => { if (!MEN || e.target !== MEN.ta) return;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); MEN.sel = (MEN.sel + (e.key === 'ArrowDown' ? 1 : -1) + MEN.itens.length) % MEN.itens.length; abrirMen(MEN.ta); }
+  else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); escolherMen(MEN.itens[MEN.sel].id); }
+  else if (e.key === 'Escape') { e.preventDefault(); fecharMen(); } });
+document.addEventListener('mousedown', e => { const b = e.target.closest && e.target.closest('[data-men]'); if (b) { e.preventDefault(); escolherMen(b.dataset.men); } else if (MEN && e.target !== MEN.ta) fecharMen(); });
+document.addEventListener('focusout', e => { if (MEN && e.target === MEN.ta) setTimeout(() => { if (MEN && document.activeElement !== MEN.ta) fecharMen(); }, 150); });
 /** Quem pode ser marcado num comentário: quem enxerga a pendência (InoxTudo: todo liberado; Nossas/Backend: só Devs), menos você. */
 const marcaveis = p => D.usuarios.filter(u => u.status === 'liberado' && u.id !== EU.id && (p.area === 'inox' || u.papel === 'dev'));
 const meu = p => p.paras.includes(EU.id), TIPO = { info: 'Informação', arquivo: 'Arquivo', tarefa: 'Tarefa' };
@@ -317,13 +351,14 @@ function tPendencias() {
     + (admin() ? `<div class="abas" role="tablist">${Object.entries(AREAS).map(([v, [r]]) => { const n = D.pendencias.filter(p => p.area === v && !p.ok).length;
         return `<button role="tab" aria-selected="${AREA === v}" class="${AREA === v ? 'on' : ''}" data-area="${v}">${r}${v !== 'inox' ? ' <small>só devs</small>' : ''}<span class="n">${n}</span></button>`; }).join('')}</div>` : '')
     + `<p class="perg">${AREAS[AREA][1]}</p>`
-    + `<section class="cartao hero" style="margin-bottom:16px"><h3>${devs ? 'Nova tarefa' : 'Solicitar informação ou arquivo'}</h3><div class="pedir">`
+    + (!NOVA ? `<button class="btn ouro nova-pend" data-nova-abrir>＋ ${devs ? 'Nova tarefa' : 'Solicitar informação ou arquivo'}</button>` : '')
+    + (!NOVA ? '' : `<section class="cartao hero nova-form" style="margin-bottom:16px"><h3>${devs ? 'Nova tarefa' : 'Solicitar informação ou arquivo'}</h3><div class="pedir">`
     + `<div class="campo larga">Para quem<div class="dests">${lib.map(u => `<label class="dest">${av(u, 'p')}<input type="checkbox" name="ped-para" value="${u.id}"${marcado(u) ? ' checked' : ''}><span>${esc(u.nome)} <small>${PAPEL[u.papel]}</small></span></label>`).join('')}</div></div>`
     + (devs ? '' : `<label class="campo larga">Ainda sem acesso <small>(nomes separados por vírgula; passam a ser destinatários quando forem liberados)</small><input id="ped-aguarda" maxlength="200" placeholder="Primeiro nome de cada pessoa"></label>`)
     + (devs ? '' : `<label class="campo">O que é<select id="ped-tipo"><option value="info">Informação</option><option value="arquivo">Arquivo</option></select></label>`)
     + `<label class="campo">Prazo <input type="date" id="ped-prazo" min="${hojeISO()}"></label>`
     + `<label class="campo larga">${devs ? 'O que fazer' : 'O que você precisa'}<textarea id="ped-tx" maxlength="2000"></textarea></label>`
-    + `<div class="larga"><button class="btn ouro" id="bt-pedir">${devs ? 'Criar tarefa' : 'Solicitar'}</button></div></div></section>`
+    + `<div class="larga fio-acoes"><button class="btn ouro" id="bt-pedir">${devs ? 'Criar tarefa' : 'Solicitar'}</button><button class="btn" data-nova-fechar>Cancelar</button></div></div></section>`)
     + `<div class="filtros">${[['abertas', `Abertas ${ab.length}`], ['minhas', `Para mim ${ab.filter(meu).length}`], ['resolvidas', `Resolvidas ${daArea.length - ab.length}`], ['todas', 'Todas']].map(([v, r]) => `<button class="btn mini${FPEND === v ? ' on' : ''}${v === 'resolvidas' ? ' verde' : ''}" data-fpend="${v}">${r}</button>`).join('')}</div><div class="fios">`;
   h += L.length ? L.map((p, i) => { const de = U(p.de), atr = !p.ok && p.prazo && p.prazo < hojeISO();
     if (EDITA === p.id) return editorPend(p, i);
@@ -334,11 +369,10 @@ function tPendencias() {
       + (p.ok ? `<span class="tag ok cheia">✓ ${p.tipo === 'tarefa' ? 'Concluída' : 'Resolvida'}</span>` : p.prazo ? `<span class="tag ${atr ? 'at' : 'ab'}">${atr ? 'Atrasada · ' : 'até '}${dia(p.prazo)}</span>` : '<span class="tag">sem prazo</span>') + '</span></div>'
       + p.coms.map(c => { const u = U(c.de);
           if (c.apagado_em) return `<div class="resp apagado"><span class="q">🗑 Comentário de <b>${esc(u.nome)}</b> apagado por ${esc(U(c.apagado_por).nome)} em ${quando(c.apagado_em)}</span></div>`;
-          return `<div class="resp" style="--c:${esc(u.cor)}">${av(u, 'p')}<div><span class="q"><b>${esc(u.nome)}</b> <small>· ${quando(c.em)}</small></span><p>${esc(c.tx)}</p>${(c.mencoes || []).length ? `<small class="mencoes">${c.mencoes.map(id => '@' + esc(U(id).nome)).join(' ')}</small>` : ''}${reacoesHtml(c)}</div>`
+          return `<div class="resp" style="--c:${esc(u.cor)}">${av(u, 'p')}<div><span class="q"><b>${esc(u.nome)}</b> <small>· ${quando(c.em)}</small></span><p>${textoComMencoes(c)}</p>${reacoesHtml(c)}</div>`
             + (c.de === EU.id || admin() ? `<button class="lnk apagar" data-com-rm="${c.id}" aria-label="Apagar comentário">Apagar</button>` : '') + '</div>'; }).join('')
       + (anx.length ? `<div class="anx">${anx.map(a => `<button class="btn mini" data-baixar="${a.id}" title="Baixar">📎 ${esc(a.nome)}</button>`).join('')}</div>` : '')
-      + `<div class="fio-acoes"><textarea data-com-tx="${p.id}" maxlength="4000" placeholder="Comentar…"></textarea><button class="btn mini" data-com="${p.id}">Comentar</button></div>`
-      + (marcaveis(p).length ? `<div class="marcar"><small>Marcar e avisar:</small>${marcaveis(p).map(u => `<label class="dest mini">${av(u, 'p')}<input type="checkbox" name="men-${p.id}" value="${u.id}"><span>@${esc(u.nome)}</span></label>`).join('')}</div>` : '')
+      + `<div class="fio-acoes"><textarea data-com-tx="${p.id}" maxlength="4000" placeholder="Comentar… (use @ para marcar alguém)"></textarea><button class="btn mini" data-com="${p.id}">Comentar</button></div>`
       + `<div class="fio-acoes">${!p.ok ? `<button class="btn mini${p.tipo === 'arquivo' ? ' ouro' : ''}" data-pend-arq="${p.id}">${p.tipo === 'arquivo' ? 'Enviar o arquivo' : '📎 Anexar arquivo'}</button>` : ''}`
       + `<button class="btn mini" data-pend-ed="${p.id}">✎ Editar</button>`
       + (p.ok ? '' : `<button class="btn mini" data-pend-imp="${p.id}">${p.importante ? '☆ Tirar importante' : '★ Marcar importante'}</button>`)
@@ -458,14 +492,16 @@ document.addEventListener('click', async e => { const t = s => e.target.closest(
   const ac = t('[data-acesso]'); if (ac) { const u = U(ac.dataset.acesso), para = ac.dataset.para;
     grava(`${para === 'liberado' ? 'Liberar' : 'Bloquear'} o acesso de ${u.nome}?`, async () => ok_(await sb.from('perfis').update({ status: para }).eq('id', u.id)), para === 'liberado' ? 'Acesso liberado' : 'Acesso bloqueado'); return; }
   const fp = t('[data-fpend]'); if (fp) { FPEND = fp.dataset.fpend; pintar(); return; }
-  const fa = t('[data-area]'); if (fa) { AREA = fa.dataset.area; FPEND = 'abertas'; EDITA = null; pintar(); return; }
+  const fa = t('[data-area]'); if (fa) { AREA = fa.dataset.area; FPEND = 'abertas'; EDITA = null; NOVA = false; pintar(); return; }
   if (t('#bt-pedir')) { const tx = $('#ped-tx').value.trim(), prazo = $('#ped-prazo').value || null, area = AREA, tipo = area === 'inox' ? $('#ped-tipo').value : 'tarefa';
     const paras = [...document.querySelectorAll('input[name="ped-para"]:checked')].map(x => x.value);
     const aguarda = area === 'inox' ? [...new Set($('#ped-aguarda').value.split(',').map(x => x.trim().replace(/\s+/g, ' ')).filter(Boolean))].slice(0, 10) : [];
     if (!tx) { aviso('Escreva o que é'); return; } if (!paras.length && !aguarda.length) { aviso('Marque para quem é'); return; }
     const nomes = juntar([...paras.map(id => U(id).nome), ...aguarda.map(n => n + ' (sem acesso ainda)')]);
     grava(`${tipo === 'tarefa' ? 'Criar a tarefa' : `Solicitar ${tipo === 'arquivo' ? 'o arquivo' : 'a informação'}`} para ${nomes}?`,
-      async () => ok_(await sb.from('pendencias').insert({ de: EU.id, area, paras, aguarda, tipo, tx, prazo })), tipo === 'tarefa' ? 'Tarefa criada' : 'Solicitação enviada'); return; }
+      async () => { ok_(await sb.from('pendencias').insert({ de: EU.id, area, paras, aguarda, tipo, tx, prazo })); NOVA = false; }, tipo === 'tarefa' ? 'Tarefa criada' : 'Solicitação enviada'); return; }
+  if (t('[data-nova-abrir]')) { NOVA = true; pintar(); const f = $('#ped-tx'); if (f) f.focus(); return; }
+  if (t('[data-nova-fechar]')) { NOVA = false; pintar(); return; }
   const pe = t('[data-pend-ed]'); if (pe) { EDITA = pe.dataset.pendEd; pintar(); const f = $('#ed-tx'); if (f) { f.focus(); f.scrollIntoView({ block: 'center' }); } return; }
   if (t('[data-ed-cancelar]')) { EDITA = null; pintar(); return; }
   const es = t('[data-ed-salvar]'); if (es) { const p = D.pendencias.find(x => x.id === es.dataset.edSalvar), tx = $('#ed-tx').value.trim();
@@ -476,7 +512,7 @@ document.addEventListener('click', async e => { const t = s => e.target.closest(
     if (await grava('Salvar as alterações desta pendência?', async () => ok_(await sb.from('pendencias').update(mud).eq('id', p.id)), 'Pendência atualizada')) { EDITA = null; pintar(); }
     return; }
   const cm = t('[data-com]'); if (cm) { const id = cm.dataset.com, tx = document.querySelector(`[data-com-tx="${id}"]`).value.trim(); if (!tx) { aviso('Escreva o comentário'); return; }
-    const mencoes = [...document.querySelectorAll(`input[name="men-${id}"]:checked`)].map(x => x.value);
+    const mencoes = mencoesDoTexto(tx, D.pendencias.find(x => x.id === id));
     grava(mencoes.length ? `Publicar o comentário e avisar ${juntar(mencoes.map(u => U(u).nome))}?` : 'Publicar este comentário?',
       async () => ok_(await sb.from('pend_comentarios').insert({ pendencia_id: id, de: EU.id, tx, mencoes })), mencoes.length ? 'Comentário publicado e aviso enviado' : 'Comentário publicado'); return; }
   const ra = t('[data-reac-abrir]'); if (ra) { REAGINDO = REAGINDO === ra.dataset.reacAbrir ? null : ra.dataset.reacAbrir; pintar(); return; }
