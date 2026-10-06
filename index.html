@@ -78,13 +78,13 @@ main{padding:26px clamp(16px,3vw,36px) 60px; min-width:0;}
 .pend{display:flex; gap:12px; align-items:flex-start; padding:10px 0; border-top:1px solid var(--borda);} .pend:first-child{border-top:0;} .pend input{width:18px; height:18px; margin-top:3px; accent-color:var(--acento);}
 .pend.ok span{text-decoration:line-through; color:var(--fg-3);}
 
-.pedir{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;} .pedir .larga{grid-column:1/-1;} .pendc.ok h4{text-decoration:line-through; color:var(--fg-3);} .pendc .fio-cab{align-items:center; flex-wrap:wrap;}
+.pedir{display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;} .pedir .larga{grid-column:1/-1;} .pendc.ok{border-color:color-mix(in srgb,var(--pos) 45%,var(--borda)); border-left:4px solid var(--pos); background:linear-gradient(90deg,rgba(111,196,147,.09),transparent 60%),var(--painel);} .pendc.ok h4{color:var(--pos);} .pendc.ok h4::before{content:'✓ ';} .tag.ok.cheia{background:var(--pos); color:#10261a; border-color:var(--pos);} .pendc .fio-cab{align-items:center; flex-wrap:wrap;}
 /* dúvidas */
 .fios{display:grid; gap:12px;} .fio{background:var(--painel); border:1px solid var(--borda); border-radius:16px; padding:16px 18px; animation:sobe .4s both; animation-delay:calc(var(--i,0)*50ms);}
 .fio-cab{display:flex; gap:12px; align-items:flex-start;} .fio-cab .tx{flex:1; min-width:0;} .fio h4{margin:0 0 2px; font-size:16px;} .fio p{margin:6px 0 0; color:var(--fg-2); white-space:pre-wrap;}
 .resp{display:flex; gap:10px; margin:12px 0 0 14px; padding:10px 12px; background:var(--painel-2); border-radius:12px; border-left:3px solid var(--c,var(--acento));}
 .resp p{margin:2px 0 0;} .resp .q{font-size:13px;} .fio-acoes{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;} .fio-acoes textarea{min-height:44px; flex:1 1 260px;}
-.filtros{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;} .filtros button{border-radius:999px;} .filtros button.on{background:var(--acento); border-color:var(--acento); color:#17130a;}
+.filtros{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;} .filtros button{border-radius:999px;} .filtros button.on{background:var(--acento); border-color:var(--acento); color:#17130a;} .filtros button.verde{color:var(--pos); border-color:color-mix(in srgb,var(--pos) 55%,var(--borda-forte));} .filtros button.verde.on{background:var(--pos); border-color:var(--pos); color:#10261a;}
 
 .abas{display:flex; gap:6px; flex-wrap:wrap; margin:4px 0 10px; border-bottom:1px solid var(--borda);}
 .abas button{display:flex; align-items:center; gap:8px; border:0; background:none; padding:10px 14px; font-weight:600; color:var(--fg-2); cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-1px; min-height:44px;}
@@ -280,12 +280,12 @@ function tPendencias() {
     + `<label class="campo">Prazo <input type="date" id="ped-prazo" min="${hojeISO()}"></label>`
     + `<label class="campo larga">${devs ? 'O que fazer' : 'O que você precisa'}<textarea id="ped-tx" maxlength="2000"></textarea></label>`
     + `<div class="larga"><button class="btn ouro" id="bt-pedir">${devs ? 'Criar tarefa' : 'Solicitar'}</button></div></div></section>`
-    + `<div class="filtros">${[['abertas', `Abertas ${ab.length}`], ['minhas', `Para mim ${ab.filter(meu).length}`], ['resolvidas', 'Resolvidas'], ['todas', 'Todas']].map(([v, r]) => `<button class="btn mini${FPEND === v ? ' on' : ''}" data-fpend="${v}">${r}</button>`).join('')}</div><div class="fios">`;
+    + `<div class="filtros">${[['abertas', `Abertas ${ab.length}`], ['minhas', `Para mim ${ab.filter(meu).length}`], ['resolvidas', `Resolvidas ${daArea.length - ab.length}`], ['todas', 'Todas']].map(([v, r]) => `<button class="btn mini${FPEND === v ? ' on' : ''}${v === 'resolvidas' ? ' verde' : ''}" data-fpend="${v}">${r}</button>`).join('')}</div><div class="fios">`;
   h += L.length ? L.map((p, i) => { const de = U(p.de), atr = !p.ok && p.prazo && p.prazo < hojeISO();
     return `<article class="fio pendc${p.ok ? ' ok' : ''}" style="--i:${i}"><div class="fio-cab"><span class="avs">${p.paras.map(id => av(U(id))).join('')}${p.aguarda.map(avEspera).join('')}</span><div class="tx"><h4>${esc(p.tx)}</h4>`
       + `<small>Para <b>${esc(juntar(nomesDe(p)))}</b> · por ${esc(de.nome)} em ${quando(p.em)}${p.arq ? ` · arquivo: ${esc(p.arq)}` : ''}</small></div>`
       + `<span class="tags"><span class="tag az">${TIPO[p.tipo] || esc(p.tipo)}</span>`
-      + (p.ok ? '<span class="tag ok">Resolvida</span>' : p.prazo ? `<span class="tag ${atr ? 'at' : 'ab'}">${atr ? 'Atrasada · ' : 'até '}${dia(p.prazo)}</span>` : '<span class="tag">sem prazo</span>') + '</span></div>'
+      + (p.ok ? `<span class="tag ok cheia">✓ ${p.tipo === 'tarefa' ? 'Concluída' : 'Resolvida'}</span>` : p.prazo ? `<span class="tag ${atr ? 'at' : 'ab'}">${atr ? 'Atrasada · ' : 'até '}${dia(p.prazo)}</span>` : '<span class="tag">sem prazo</span>') + '</span></div>'
       + `<div class="fio-acoes">${!p.ok && p.tipo === 'arquivo' ? `<button class="btn mini ouro" data-pend-arq="${p.id}">Enviar o arquivo</button>` : ''}`
       + `<button class="btn mini" data-pend-ok="${p.id}">${p.ok ? 'Reabrir' : p.tipo === 'tarefa' ? 'Marcar como feita' : 'Marcar como resolvida'}</button><button class="btn mini" data-pend-rm="${p.id}">Excluir</button></div></article>`; }).join('')
     : '<section class="cartao"><small>Nenhuma pendência neste filtro.</small></section>';
