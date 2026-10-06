@@ -86,6 +86,14 @@ main{padding:26px clamp(16px,3vw,36px) 60px; min-width:0;}
 .resp p{margin:2px 0 0;} .resp .q{font-size:13px;} .fio-acoes{display:flex; gap:8px; margin-top:12px; flex-wrap:wrap;} .fio-acoes textarea{min-height:44px; flex:1 1 260px;}
 .filtros{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;} .filtros button{border-radius:999px;} .filtros button.on{background:var(--acento); border-color:var(--acento); color:#17130a;}
 
+.abas{display:flex; gap:6px; flex-wrap:wrap; margin:4px 0 10px; border-bottom:1px solid var(--borda);}
+.abas button{display:flex; align-items:center; gap:8px; border:0; background:none; padding:10px 14px; font-weight:600; color:var(--fg-2); cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-1px; min-height:44px;}
+.abas button.on{color:var(--fg); border-bottom-color:var(--acento);} .abas button small{font-size:11px; color:var(--fg-3); font-weight:500;}
+.abas .n{background:var(--painel-2); border:1px solid var(--borda-forte); border-radius:999px; font-size:12px; padding:0 8px;}
+.dests{display:flex; flex-wrap:wrap; gap:8px; margin-top:2px;} .dest{display:flex; align-items:center; gap:8px; border:1px solid var(--borda-forte); border-radius:999px; padding:4px 12px 4px 4px; cursor:pointer; color:var(--fg); font-weight:600; min-height:40px;}
+.dest input{width:16px; height:16px; min-height:0; accent-color:var(--acento); margin:0;} .dest small{font-weight:500; color:var(--fg-3);} .dest:has(input:checked){border-color:var(--acento); background:rgba(220,174,94,.08);}
+.avs{display:flex; flex:none;} .avs .av + .av{margin-left:-12px;} .av.espera{background:var(--painel-2); color:var(--fg-2); border:2px dashed var(--borda-forte);}
+.tags{display:flex; gap:6px; flex-wrap:wrap; align-items:center;}
 /* arquivos */
 .solta{border:2px dashed var(--borda-forte); border-radius:16px; padding:22px; text-align:center; color:var(--fg-2); cursor:pointer; transition:border-color .15s, background .15s;} .solta:hover,.solta.sobre{border-color:var(--acento); background:rgba(220,174,94,.06);}
 table{width:100%; border-collapse:collapse;} th{font:500 12.5px var(--mono); color:var(--fg-3); text-align:left; padding:8px 10px; border-bottom:1px solid var(--borda-forte);} td{padding:10px; border-bottom:1px solid var(--borda); vertical-align:middle;}
@@ -112,7 +120,7 @@ table{width:100%; border-collapse:collapse;} th{font:500 12.5px var(--mono); col
   .btn{min-height:44px;} .btn.mini{min-height:40px; padding:8px 13px;} .filtros button{min-height:40px;}
   .lnk{display:inline-block; padding:10px 4px;} .lg-troca{margin:-6px 0 !important;}
   input,select,textarea{font-size:16px; min-height:44px;}
-  .fio{padding:14px;} .fio-cab{flex-wrap:wrap; gap:8px 12px;} .fio-cab .tx{flex:1 1 calc(100% - 52px);} .fio-cab>.tag:nth-child(3){margin-left:52px;}
+  .fio{padding:14px;} .fio-cab{display:grid; grid-template-columns:auto 1fr; gap:8px 12px;} .fio-cab>.tags{grid-column:2;} .fio-cab>.tag{grid-column:2; justify-self:start;}
   .resp{margin-left:0;} .fio-acoes textarea{flex-basis:100%;}
   .pessoa{grid-template-columns:1fr 1fr; gap:10px;} .pessoa>.quem{grid-column:1/-1;} .pessoa>.tag{grid-column:1/-1; justify-self:start;} .pessoa select{width:100%;}
   .quem>span{min-width:0;} .quem small{overflow-wrap:anywhere;}
@@ -187,7 +195,7 @@ const SUPA_URL = 'https://kopudvjyxtcwkdulxosb.supabase.co', SUPA_CHAVE = 'sb_pu
 const ERRO_URL = (() => { const q = new URLSearchParams(location.hash.slice(1) || location.search.slice(1)); return q.get('error_code') || q.get('error') || ''; })();
 const sb = window.supabase.createClient(SUPA_URL, SUPA_CHAVE, { auth: { persistSession: true, autoRefreshToken: true } });
 
-let D = { usuarios: [], marcos: [], pendencias: [], duvidas: [], arquivos: [] }, EU = null, SESSAO = null, TELA = 'andamento', FILTRO = 'todas', FPEND = 'abertas';
+let D = { usuarios: [], marcos: [], pendencias: [], duvidas: [], arquivos: [] }, EU = null, SESSAO = null, TELA = 'andamento', FILTRO = 'todas', FPEND = 'abertas', AREA = 'inox';
 const $ = s => document.querySelector(s), esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const PAPEL = { dev: 'Dev', ceo: 'CEO', equipe: 'Equipe' };
 /* Níveis (Gabriel, 05/10/2026): todo usuário liberado VÊ e EDITA tudo (cronograma, pendências, dúvidas, arquivos).
@@ -228,7 +236,7 @@ async function carregar() {
   if (fotos.length) { const s = await sb.storage.from('fotos').createSignedUrls(fotos, 3600); (s.data || []).forEach(x => { if (x.signedUrl) urls[x.path] = x.signedUrl; }); }
   D.usuarios = perfis.map(x => ({ ...x, foto: x.foto ? urls[x.foto] || '' : '', fotoPath: x.foto }));
   D.marcos = ok_(m) || []; D.arquivos = ok_(ar) || [];
-  D.pendencias = (ok_(pe) || []).map(x => ({ ...x, okEm: x.ok_em }));
+  D.pendencias = (ok_(pe) || []).map(x => ({ ...x, okEm: x.ok_em, paras: x.paras || [], aguarda: x.aguarda || [] }));
   const resp = ok_(re) || []; D.duvidas = (ok_(du) || []).map(d => ({ ...d, resp: resp.filter(r => r.duvida_id === d.id) }));
   EU = SESSAO ? D.usuarios.find(u => u.id === SESSAO.user.id) || null : null;
 }
@@ -244,25 +252,42 @@ function tAndamento() {
 }
 const hojeISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 const dia = iso => iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) : '';
+/* Pendências em três áreas (06/10/2026). "InoxTudo": o que a InoxTudo precisa enviar ou responder (todos veem).
+   "Nossas" e "Backend · Supabase": só os Devs veem — a regra está no banco (RLS), a tela só acompanha.
+   Vários destinatários (paras); quem ainda não tem acesso fica em "aguarda" pelo nome e passa a destinatário sozinho ao ser liberado. */
+const AREAS = { inox: ['InoxTudo', 'O que a InoxTudo precisa enviar ou responder para o projeto andar.'],
+  dev: ['Nossas', 'Nossas pendências de desenvolvimento. Só os Devs veem.'],
+  backend: ['Backend · Supabase', 'O que sobe para o Supabase depois. Só os Devs veem.'] };
+const meu = p => p.paras.includes(EU.id), TIPO = { info: 'Informação', arquivo: 'Arquivo', tarefa: 'Tarefa' };
+const nomesDe = p => [...p.paras.map(id => U(id).nome), ...p.aguarda.map(n => n + ' (aguardando acesso)')];
+const juntar = l => l.length < 2 ? (l[0] || '—') : l.slice(0, -1).join(', ') + ' e ' + l[l.length - 1];
+const avEspera = n => `<span class="av espera" title="${esc(n)} · aguardando acesso">${esc(ini(n))}</span>`;
 function tPendencias() {
-  const lib = D.usuarios.filter(u => u.status === 'liberado' && u.id !== EU.id), padrao = admin() ? (lib.find(u => u.papel === 'ceo') || lib[0]) : (lib.find(u => u.papel === 'dev') || lib[0]);
-  const ab = D.pendencias.filter(p => !p.ok), L = D.pendencias.filter(p => FPEND === 'todas' ? true : FPEND === 'minhas' ? p.para === EU.id && !p.ok : FPEND === 'resolvidas' ? p.ok : !p.ok)
-    .sort((a, b) => (a.ok - b.ok) || (a.prazo || '9999').localeCompare(b.prazo || '9999'));
-  let h = `<div class="topo"><h1>Pendências</h1></div><p class="perg">O que cada lado precisa enviar ou responder para o projeto andar.</p>`
-    + `<section class="cartao hero" style="margin-bottom:16px"><h3>Solicitar informação ou arquivo</h3>`
-    + (lib.length ? `<div class="pedir"><label class="campo">Para quem<select id="ped-para">${lib.map(u => `<option value="${u.id}"${padrao && u.id === padrao.id ? ' selected' : ''}>${esc(u.nome)} · ${PAPEL[u.papel]}</option>`).join('')}</select></label>`
-      + `<label class="campo">O que é<select id="ped-tipo"><option value="info">Informação</option><option value="arquivo">Arquivo</option></select></label>`
-      + `<label class="campo">Prazo <input type="date" id="ped-prazo" min="${hojeISO()}"></label>`
-      + `<label class="campo larga">O que você precisa<textarea id="ped-tx" maxlength="2000"></textarea></label>`
-      + `<div class="larga"><button class="btn ouro" id="bt-pedir">Solicitar</button></div></div>` : '<small>Ainda não há outra pessoa liberada para receber o pedido.</small>') + '</section>'
-    + `<div class="filtros">${[['abertas', `Abertas ${ab.length}`], ['minhas', `Para mim ${ab.filter(p => p.para === EU.id).length}`], ['resolvidas', 'Resolvidas'], ['todas', 'Todas']].map(([v, r]) => `<button class="btn mini${FPEND === v ? ' on' : ''}" data-fpend="${v}">${r}</button>`).join('')}</div><div class="fios">`;
-  h += L.length ? L.map((p, i) => { const para = U(p.para), de = U(p.de), atr = !p.ok && p.prazo && p.prazo < hojeISO();
-    return `<article class="fio pendc${p.ok ? ' ok' : ''}" style="--i:${i}"><div class="fio-cab">${av(para)}<div class="tx"><h4>${esc(p.tx)}</h4>`
-      + `<small>Para <b>${esc(para.nome)}</b> · pedido por ${esc(de.nome)} em ${quando(p.em)}${p.arq ? ` · arquivo: ${esc(p.arq)}` : ''}</small></div>`
-      + `<span class="tag az">${p.tipo === 'arquivo' ? 'Arquivo' : 'Informação'}</span>`
-      + (p.ok ? '<span class="tag ok">Resolvida</span>' : p.prazo ? `<span class="tag ${atr ? 'at' : 'ab'}">${atr ? 'Atrasada · ' : 'até '}${dia(p.prazo)}</span>` : '<span class="tag">sem prazo</span>') + '</div>'
+  if (!admin()) AREA = 'inox';
+  const devs = AREA !== 'inox', daArea = D.pendencias.filter(p => p.area === AREA);
+  const lib = D.usuarios.filter(u => u.status === 'liberado' && (!devs || u.papel === 'dev'));
+  const marcado = u => devs ? true : u.papel !== 'dev';   // padrão: tarefa nossa → os Devs; pedido à InoxTudo → quem é da InoxTudo
+  const ab = daArea.filter(p => !p.ok), L = daArea.filter(p => FPEND === 'todas' ? true : FPEND === 'minhas' ? meu(p) && !p.ok : FPEND === 'resolvidas' ? p.ok : !p.ok)
+    .sort((a, b) => (a.ok - b.ok) || (a.prazo || '9999').localeCompare(b.prazo || '9999') || a.em.localeCompare(b.em));
+  let h = `<div class="topo"><h1>Pendências</h1></div>`
+    + (admin() ? `<div class="abas" role="tablist">${Object.entries(AREAS).map(([v, [r]]) => { const n = D.pendencias.filter(p => p.area === v && !p.ok).length;
+        return `<button role="tab" aria-selected="${AREA === v}" class="${AREA === v ? 'on' : ''}" data-area="${v}">${r}${v !== 'inox' ? ' <small>só devs</small>' : ''}<span class="n">${n}</span></button>`; }).join('')}</div>` : '')
+    + `<p class="perg">${AREAS[AREA][1]}</p>`
+    + `<section class="cartao hero" style="margin-bottom:16px"><h3>${devs ? 'Nova tarefa' : 'Solicitar informação ou arquivo'}</h3><div class="pedir">`
+    + `<div class="campo larga">Para quem<div class="dests">${lib.map(u => `<label class="dest">${av(u, 'p')}<input type="checkbox" name="ped-para" value="${u.id}"${marcado(u) ? ' checked' : ''}><span>${esc(u.nome)} <small>${PAPEL[u.papel]}</small></span></label>`).join('')}</div></div>`
+    + (devs ? '' : `<label class="campo larga">Ainda sem acesso <small>(nomes separados por vírgula; passam a ser destinatários quando forem liberados)</small><input id="ped-aguarda" maxlength="200" placeholder="Primeiro nome de cada pessoa"></label>`)
+    + (devs ? '' : `<label class="campo">O que é<select id="ped-tipo"><option value="info">Informação</option><option value="arquivo">Arquivo</option></select></label>`)
+    + `<label class="campo">Prazo <input type="date" id="ped-prazo" min="${hojeISO()}"></label>`
+    + `<label class="campo larga">${devs ? 'O que fazer' : 'O que você precisa'}<textarea id="ped-tx" maxlength="2000"></textarea></label>`
+    + `<div class="larga"><button class="btn ouro" id="bt-pedir">${devs ? 'Criar tarefa' : 'Solicitar'}</button></div></div></section>`
+    + `<div class="filtros">${[['abertas', `Abertas ${ab.length}`], ['minhas', `Para mim ${ab.filter(meu).length}`], ['resolvidas', 'Resolvidas'], ['todas', 'Todas']].map(([v, r]) => `<button class="btn mini${FPEND === v ? ' on' : ''}" data-fpend="${v}">${r}</button>`).join('')}</div><div class="fios">`;
+  h += L.length ? L.map((p, i) => { const de = U(p.de), atr = !p.ok && p.prazo && p.prazo < hojeISO();
+    return `<article class="fio pendc${p.ok ? ' ok' : ''}" style="--i:${i}"><div class="fio-cab"><span class="avs">${p.paras.map(id => av(U(id))).join('')}${p.aguarda.map(avEspera).join('')}</span><div class="tx"><h4>${esc(p.tx)}</h4>`
+      + `<small>Para <b>${esc(juntar(nomesDe(p)))}</b> · por ${esc(de.nome)} em ${quando(p.em)}${p.arq ? ` · arquivo: ${esc(p.arq)}` : ''}</small></div>`
+      + `<span class="tags"><span class="tag az">${TIPO[p.tipo] || esc(p.tipo)}</span>`
+      + (p.ok ? '<span class="tag ok">Resolvida</span>' : p.prazo ? `<span class="tag ${atr ? 'at' : 'ab'}">${atr ? 'Atrasada · ' : 'até '}${dia(p.prazo)}</span>` : '<span class="tag">sem prazo</span>') + '</span></div>'
       + `<div class="fio-acoes">${!p.ok && p.tipo === 'arquivo' ? `<button class="btn mini ouro" data-pend-arq="${p.id}">Enviar o arquivo</button>` : ''}`
-      + `<button class="btn mini" data-pend-ok="${p.id}">${p.ok ? 'Reabrir' : 'Marcar como resolvida'}</button><button class="btn mini" data-pend-rm="${p.id}">Excluir</button></div></article>`; }).join('')
+      + `<button class="btn mini" data-pend-ok="${p.id}">${p.ok ? 'Reabrir' : p.tipo === 'tarefa' ? 'Marcar como feita' : 'Marcar como resolvida'}</button><button class="btn mini" data-pend-rm="${p.id}">Excluir</button></div></article>`; }).join('')
     : '<section class="cartao"><small>Nenhuma pendência neste filtro.</small></section>';
   return h + '</div><input type="file" id="in-pend-arq" hidden>';
 }
@@ -304,7 +329,7 @@ function pintar() {
   document.querySelectorAll('[data-so-admin]').forEach(e => e.hidden = !admin());
   document.querySelectorAll('#menu [data-tela]').forEach(b => b.classList.toggle('on', b.dataset.tela === TELA));
   const sel = $('#menu .on'); if (sel && innerWidth <= 1000) sel.scrollIntoView({ block: 'nearest', inline: 'nearest' });   // no celular o menu rola de lado: a tela aberta fica à vista
-  const ab = D.duvidas.filter(d => d.st === 'aberta').length, pe = D.usuarios.filter(u => u.status === 'pendente').length, pm = D.pendencias.filter(p => !p.ok && p.para === EU.id).length;
+  const ab = D.duvidas.filter(d => d.st === 'aberta').length, pe = D.usuarios.filter(u => u.status === 'pendente').length, pm = D.pendencias.filter(p => !p.ok && p.paras.includes(EU.id)).length;
   $('#n-duv').hidden = !ab; $('#n-duv').textContent = ab; $('#n-pen').hidden = !pm; $('#n-pen').textContent = pm; $('#n-pend').hidden = !pe; $('#n-pend').textContent = pe;
   $('#eu').innerHTML = quem(EU); $('#conteudo').innerHTML = TELAS[TELA]();
 }
@@ -338,8 +363,14 @@ document.addEventListener('click', async e => { const t = s => e.target.closest(
   const ac = t('[data-acesso]'); if (ac) { const u = U(ac.dataset.acesso), para = ac.dataset.para;
     grava(`${para === 'liberado' ? 'Liberar' : 'Bloquear'} o acesso de ${u.nome}?`, async () => ok_(await sb.from('perfis').update({ status: para }).eq('id', u.id)), para === 'liberado' ? 'Acesso liberado' : 'Acesso bloqueado'); return; }
   const fp = t('[data-fpend]'); if (fp) { FPEND = fp.dataset.fpend; pintar(); return; }
-  if (t('#bt-pedir')) { const tx = $('#ped-tx').value.trim(), para = $('#ped-para').value, tipo = $('#ped-tipo').value, prazo = $('#ped-prazo').value || null; if (!tx) { aviso('Escreva o que você precisa'); return; }
-    grava(`Solicitar ${tipo === 'arquivo' ? 'o arquivo' : 'a informação'} para ${U(para).nome}?`, async () => ok_(await sb.from('pendencias').insert({ de: EU.id, para, tipo, tx, prazo })), 'Solicitação enviada'); return; }
+  const fa = t('[data-area]'); if (fa) { AREA = fa.dataset.area; FPEND = 'abertas'; pintar(); return; }
+  if (t('#bt-pedir')) { const tx = $('#ped-tx').value.trim(), prazo = $('#ped-prazo').value || null, area = AREA, tipo = area === 'inox' ? $('#ped-tipo').value : 'tarefa';
+    const paras = [...document.querySelectorAll('input[name="ped-para"]:checked')].map(x => x.value);
+    const aguarda = area === 'inox' ? [...new Set($('#ped-aguarda').value.split(',').map(x => x.trim().replace(/\s+/g, ' ')).filter(Boolean))].slice(0, 10) : [];
+    if (!tx) { aviso('Escreva o que é'); return; } if (!paras.length && !aguarda.length) { aviso('Marque para quem é'); return; }
+    const nomes = juntar([...paras.map(id => U(id).nome), ...aguarda.map(n => n + ' (sem acesso ainda)')]);
+    grava(`${tipo === 'tarefa' ? 'Criar a tarefa' : `Solicitar ${tipo === 'arquivo' ? 'o arquivo' : 'a informação'}`} para ${nomes}?`,
+      async () => ok_(await sb.from('pendencias').insert({ de: EU.id, area, paras, aguarda, tipo, tx, prazo })), tipo === 'tarefa' ? 'Tarefa criada' : 'Solicitação enviada'); return; }
   const po = t('[data-pend-ok]'); if (po) { const p = D.pendencias.find(x => x.id === po.dataset.pendOk), novo = !p.ok;
     grava(novo ? 'Marcar a pendência como resolvida?' : 'Reabrir a pendência?', async () => ok_(await sb.from('pendencias').update({ ok: novo, ok_em: novo ? new Date().toISOString() : null }).eq('id', p.id))); return; }
   const pr = t('[data-pend-rm]'); if (pr) { grava('Excluir esta pendência?', async () => ok_(await sb.from('pendencias').delete().eq('id', pr.dataset.pendRm)), 'Pendência excluída'); return; }
