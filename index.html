@@ -93,7 +93,7 @@ main{padding:26px clamp(16px,3vw,36px) 60px; min-width:0;}
 .dests{display:flex; flex-wrap:wrap; gap:8px; margin-top:2px;} .dest{display:flex; align-items:center; gap:8px; border:1px solid var(--borda-forte); border-radius:999px; padding:4px 12px 4px 4px; cursor:pointer; color:var(--fg); font-weight:600; min-height:40px;}
 .dest input{width:16px; height:16px; min-height:0; accent-color:var(--acento); margin:0;} .dest small{font-weight:500; color:var(--fg-3);} .dest:has(input:checked){border-color:var(--acento); background:rgba(220,174,94,.08);}
 .avs{display:flex; flex:none;} .avs .av + .av{margin-left:-12px;} .av.espera{background:var(--painel-2); color:var(--fg-2); border:2px dashed var(--borda-forte);}
-.tags{display:flex; gap:6px; flex-wrap:wrap; align-items:center;}
+.tags{display:flex; gap:6px; flex-wrap:wrap; align-items:center;} .tag.imp{color:#17130a; background:var(--ouro); border-color:var(--ouro);} .pendc.imp{border-color:color-mix(in srgb,var(--ouro) 60%,var(--borda)); border-left:4px solid var(--ouro);} .anx{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;} .pendc.editando{border-color:var(--acento);} .pendc.editando h4{margin:0 0 12px;}
 /* arquivos */
 .solta{border:2px dashed var(--borda-forte); border-radius:16px; padding:22px; text-align:center; color:var(--fg-2); cursor:pointer; transition:border-color .15s, background .15s;} .solta:hover,.solta.sobre{border-color:var(--acento); background:rgba(220,174,94,.06);}
 table{width:100%; border-collapse:collapse;} th{font:500 12.5px var(--mono); color:var(--fg-3); text-align:left; padding:8px 10px; border-bottom:1px solid var(--borda-forte);} td{padding:10px; border-bottom:1px solid var(--borda); vertical-align:middle;}
@@ -195,7 +195,7 @@ const SUPA_URL = 'https://kopudvjyxtcwkdulxosb.supabase.co', SUPA_CHAVE = 'sb_pu
 const ERRO_URL = (() => { const q = new URLSearchParams(location.hash.slice(1) || location.search.slice(1)); return q.get('error_code') || q.get('error') || ''; })();
 const sb = window.supabase.createClient(SUPA_URL, SUPA_CHAVE, { auth: { persistSession: true, autoRefreshToken: true } });
 
-let D = { usuarios: [], marcos: [], pendencias: [], duvidas: [], arquivos: [] }, EU = null, SESSAO = null, TELA = 'andamento', FILTRO = 'todas', FPEND = 'abertas', AREA = 'inox';
+let D = { usuarios: [], marcos: [], pendencias: [], duvidas: [], arquivos: [] }, EU = null, SESSAO = null, TELA = 'andamento', FILTRO = 'todas', FPEND = 'abertas', AREA = 'inox', EDITA = null;   // EDITA = id da pendência aberta para edição
 const $ = s => document.querySelector(s), esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const PAPEL = { dev: 'Dev', ceo: 'CEO', equipe: 'Equipe' };
 /* Níveis (Gabriel, 05/10/2026): todo usuário liberado VÊ e EDITA tudo (cronograma, pendências, dúvidas, arquivos).
@@ -236,7 +236,7 @@ async function carregar() {
   if (fotos.length) { const s = await sb.storage.from('fotos').createSignedUrls(fotos, 3600); (s.data || []).forEach(x => { if (x.signedUrl) urls[x.path] = x.signedUrl; }); }
   D.usuarios = perfis.map(x => ({ ...x, foto: x.foto ? urls[x.foto] || '' : '', fotoPath: x.foto }));
   D.marcos = ok_(m) || []; D.arquivos = ok_(ar) || [];
-  D.pendencias = (ok_(pe) || []).map(x => ({ ...x, okEm: x.ok_em, paras: x.paras || [], aguarda: x.aguarda || [] }));
+  D.pendencias = (ok_(pe) || []).map(x => ({ ...x, okEm: x.ok_em, paras: x.paras || [], aguarda: x.aguarda || [], anexos: x.anexos || [] }));
   const resp = ok_(re) || []; D.duvidas = (ok_(du) || []).map(d => ({ ...d, resp: resp.filter(r => r.duvida_id === d.id) }));
   EU = SESSAO ? D.usuarios.find(u => u.id === SESSAO.user.id) || null : null;
 }
@@ -262,13 +262,24 @@ const meu = p => p.paras.includes(EU.id), TIPO = { info: 'Informação', arquivo
 const nomesDe = p => [...p.paras.map(id => U(id).nome), ...p.aguarda.map(n => n + ' (aguardando acesso)')];
 const juntar = l => l.length < 2 ? (l[0] || '—') : l.slice(0, -1).join(', ') + ' e ' + l[l.length - 1];
 const avEspera = n => `<span class="av espera" title="${esc(n)} · aguardando acesso">${esc(ini(n))}</span>`;
+/** Editor da pendência: texto, prazo, tipo (InoxTudo), destinatários e quem ainda não tem acesso. Grava com confirmação. */
+function editorPend(p, i) {
+  const devs = p.area !== 'inox', lib = D.usuarios.filter(u => u.status === 'liberado' && (!devs || u.papel === 'dev'));
+  return `<article class="fio pendc editando" style="--i:${i}"><h4>Editar pendência</h4><div class="pedir">`
+    + `<label class="campo larga">${devs ? 'O que fazer' : 'O que é preciso'}<textarea id="ed-tx" maxlength="2000">${esc(p.tx)}</textarea></label>`
+    + `<div class="campo larga">Para quem<div class="dests">${lib.map(u => `<label class="dest">${av(u, 'p')}<input type="checkbox" name="ed-para" value="${u.id}"${p.paras.includes(u.id) ? ' checked' : ''}><span>${esc(u.nome)} <small>${PAPEL[u.papel]}</small></span></label>`).join('')}</div></div>`
+    + (devs ? '' : `<label class="campo larga">Ainda sem acesso <small>(nomes separados por vírgula)</small><input id="ed-aguarda" maxlength="200" value="${esc(p.aguarda.join(', '))}"></label>`)
+    + (devs ? '' : `<label class="campo">O que é<select id="ed-tipo">${[['info', 'Informação'], ['arquivo', 'Arquivo']].map(([v, r]) => `<option value="${v}"${p.tipo === v ? ' selected' : ''}>${r}</option>`).join('')}</select></label>`)
+    + `<label class="campo">Prazo <input type="date" id="ed-prazo" value="${p.prazo || ''}"></label>`
+    + `<div class="larga fio-acoes"><button class="btn ouro" data-ed-salvar="${p.id}">Salvar</button><button class="btn" data-ed-cancelar>Cancelar</button></div></div></article>`;
+}
 function tPendencias() {
   if (!admin()) AREA = 'inox';
   const devs = AREA !== 'inox', daArea = D.pendencias.filter(p => p.area === AREA);
   const lib = D.usuarios.filter(u => u.status === 'liberado' && (!devs || u.papel === 'dev'));
   const marcado = u => devs ? true : u.papel !== 'dev';   // padrão: tarefa nossa → os Devs; pedido à InoxTudo → quem é da InoxTudo
   const ab = daArea.filter(p => !p.ok), L = daArea.filter(p => FPEND === 'todas' ? true : FPEND === 'minhas' ? meu(p) && !p.ok : FPEND === 'resolvidas' ? p.ok : !p.ok)
-    .sort((a, b) => (a.ok - b.ok) || (a.prazo || '9999').localeCompare(b.prazo || '9999') || a.em.localeCompare(b.em));
+    .sort((a, b) => (a.ok - b.ok) || (!a.ok && (b.importante - a.importante)) || (a.prazo || '9999').localeCompare(b.prazo || '9999') || a.em.localeCompare(b.em));
   let h = `<div class="topo"><h1>Pendências</h1></div>`
     + (admin() ? `<div class="abas" role="tablist">${Object.entries(AREAS).map(([v, [r]]) => { const n = D.pendencias.filter(p => p.area === v && !p.ok).length;
         return `<button role="tab" aria-selected="${AREA === v}" class="${AREA === v ? 'on' : ''}" data-area="${v}">${r}${v !== 'inox' ? ' <small>só devs</small>' : ''}<span class="n">${n}</span></button>`; }).join('')}</div>` : '')
@@ -282,11 +293,18 @@ function tPendencias() {
     + `<div class="larga"><button class="btn ouro" id="bt-pedir">${devs ? 'Criar tarefa' : 'Solicitar'}</button></div></div></section>`
     + `<div class="filtros">${[['abertas', `Abertas ${ab.length}`], ['minhas', `Para mim ${ab.filter(meu).length}`], ['resolvidas', `Resolvidas ${daArea.length - ab.length}`], ['todas', 'Todas']].map(([v, r]) => `<button class="btn mini${FPEND === v ? ' on' : ''}${v === 'resolvidas' ? ' verde' : ''}" data-fpend="${v}">${r}</button>`).join('')}</div><div class="fios">`;
   h += L.length ? L.map((p, i) => { const de = U(p.de), atr = !p.ok && p.prazo && p.prazo < hojeISO();
-    return `<article class="fio pendc${p.ok ? ' ok' : ''}" style="--i:${i}"><div class="fio-cab"><span class="avs">${p.paras.map(id => av(U(id))).join('')}${p.aguarda.map(avEspera).join('')}</span><div class="tx"><h4>${esc(p.tx)}</h4>`
-      + `<small>Para <b>${esc(juntar(nomesDe(p)))}</b> · por ${esc(de.nome)} em ${quando(p.em)}${p.arq ? ` · arquivo: ${esc(p.arq)}` : ''}</small></div>`
-      + `<span class="tags"><span class="tag az">${TIPO[p.tipo] || esc(p.tipo)}</span>`
+    if (EDITA === p.id) return editorPend(p, i);
+    const anx = p.anexos.map(id => D.arquivos.find(a => a.id === id)).filter(Boolean);
+    return `<article class="fio pendc${p.ok ? ' ok' : ''}${p.importante && !p.ok ? ' imp' : ''}" style="--i:${i}"><div class="fio-cab"><span class="avs">${p.paras.map(id => av(U(id))).join('')}${p.aguarda.map(avEspera).join('')}</span><div class="tx"><h4>${esc(p.tx)}</h4>`
+      + `<small>Para <b>${esc(juntar(nomesDe(p)))}</b> · por ${esc(de.nome)} em ${quando(p.em)}</small></div>`
+      + `<span class="tags">${p.importante ? '<span class="tag imp">★ Importante</span>' : ''}<span class="tag az">${TIPO[p.tipo] || esc(p.tipo)}</span>`
       + (p.ok ? `<span class="tag ok cheia">✓ ${p.tipo === 'tarefa' ? 'Concluída' : 'Resolvida'}</span>` : p.prazo ? `<span class="tag ${atr ? 'at' : 'ab'}">${atr ? 'Atrasada · ' : 'até '}${dia(p.prazo)}</span>` : '<span class="tag">sem prazo</span>') + '</span></div>'
-      + `<div class="fio-acoes">${!p.ok && p.tipo === 'arquivo' ? `<button class="btn mini ouro" data-pend-arq="${p.id}">Enviar o arquivo</button>` : ''}`
+      + (p.resposta ? `<div class="resp" style="--c:${esc(U(p.resp_por).cor)}">${av(U(p.resp_por), 'p')}<div><span class="q"><b>${esc(U(p.resp_por).nome)}</b> <small>· ${p.resp_em ? quando(p.resp_em) : ''}</small></span><p>${esc(p.resposta)}</p></div></div>` : '')
+      + (anx.length ? `<div class="anx">${anx.map(a => `<button class="btn mini" data-baixar="${a.id}" title="Baixar">📎 ${esc(a.nome)}</button>`).join('')}</div>` : '')
+      + (p.ok ? '' : `<div class="fio-acoes"><textarea data-pend-resp-tx="${p.id}" maxlength="4000" placeholder="${p.resposta ? 'Atualizar a resposta…' : 'Responder aqui…'}"></textarea><button class="btn mini" data-pend-resp="${p.id}">${p.resposta ? 'Atualizar resposta' : 'Responder'}</button></div>`)
+      + `<div class="fio-acoes">${!p.ok ? `<button class="btn mini${p.tipo === 'arquivo' ? ' ouro' : ''}" data-pend-arq="${p.id}">${p.tipo === 'arquivo' ? 'Enviar o arquivo' : '📎 Anexar arquivo'}</button>` : ''}`
+      + `<button class="btn mini" data-pend-ed="${p.id}">✎ Editar</button>`
+      + (p.ok ? '' : `<button class="btn mini" data-pend-imp="${p.id}">${p.importante ? '☆ Tirar importante' : '★ Marcar importante'}</button>`)
       + `<button class="btn mini" data-pend-ok="${p.id}">${p.ok ? 'Reabrir' : p.tipo === 'tarefa' ? 'Marcar como feita' : 'Marcar como resolvida'}</button><button class="btn mini" data-pend-rm="${p.id}">Excluir</button></div></article>`; }).join('')
     : '<section class="cartao"><small>Nenhuma pendência neste filtro.</small></section>';
   return h + '</div><input type="file" id="in-pend-arq" hidden>';
@@ -338,8 +356,8 @@ function pintar() {
 async function subirArquivo(arq, tipo) {   // → caminho no armazenamento (pasta do próprio usuário)
   const caminho = `${EU.id}/${Date.now()}-${nomeSeguro(arq.name)}`;
   ok_(await sb.storage.from('hub-arquivos').upload(caminho, arq, { contentType: arq.type || 'application/octet-stream', upsert: false }));
-  ok_(await sb.from('arquivos').insert({ de: EU.id, nome: arq.name, tam: arq.size, tipo, caminho }));
-  return caminho;
+  const r = ok_(await sb.from('arquivos').insert({ de: EU.id, nome: arq.name, tam: arq.size, tipo, caminho }).select('id').single());
+  return r.id;
 }
 async function enviarArquivo(arq) { if (!arq) return; if (arq.size > 20 * 1048576) { aviso('Até 20 MB por arquivo'); return; }
   grava(`Enviar "${arq.name}" para o HUB?`, () => subirArquivo(arq, /\.(png|jpe?g|webp|gif)$/i.test(arq.name) ? 'Print' : 'Documento'), 'Arquivo enviado'); }
@@ -363,7 +381,7 @@ document.addEventListener('click', async e => { const t = s => e.target.closest(
   const ac = t('[data-acesso]'); if (ac) { const u = U(ac.dataset.acesso), para = ac.dataset.para;
     grava(`${para === 'liberado' ? 'Liberar' : 'Bloquear'} o acesso de ${u.nome}?`, async () => ok_(await sb.from('perfis').update({ status: para }).eq('id', u.id)), para === 'liberado' ? 'Acesso liberado' : 'Acesso bloqueado'); return; }
   const fp = t('[data-fpend]'); if (fp) { FPEND = fp.dataset.fpend; pintar(); return; }
-  const fa = t('[data-area]'); if (fa) { AREA = fa.dataset.area; FPEND = 'abertas'; pintar(); return; }
+  const fa = t('[data-area]'); if (fa) { AREA = fa.dataset.area; FPEND = 'abertas'; EDITA = null; pintar(); return; }
   if (t('#bt-pedir')) { const tx = $('#ped-tx').value.trim(), prazo = $('#ped-prazo').value || null, area = AREA, tipo = area === 'inox' ? $('#ped-tipo').value : 'tarefa';
     const paras = [...document.querySelectorAll('input[name="ped-para"]:checked')].map(x => x.value);
     const aguarda = area === 'inox' ? [...new Set($('#ped-aguarda').value.split(',').map(x => x.trim().replace(/\s+/g, ' ')).filter(Boolean))].slice(0, 10) : [];
@@ -371,6 +389,19 @@ document.addEventListener('click', async e => { const t = s => e.target.closest(
     const nomes = juntar([...paras.map(id => U(id).nome), ...aguarda.map(n => n + ' (sem acesso ainda)')]);
     grava(`${tipo === 'tarefa' ? 'Criar a tarefa' : `Solicitar ${tipo === 'arquivo' ? 'o arquivo' : 'a informação'}`} para ${nomes}?`,
       async () => ok_(await sb.from('pendencias').insert({ de: EU.id, area, paras, aguarda, tipo, tx, prazo })), tipo === 'tarefa' ? 'Tarefa criada' : 'Solicitação enviada'); return; }
+  const pe = t('[data-pend-ed]'); if (pe) { EDITA = pe.dataset.pendEd; pintar(); const f = $('#ed-tx'); if (f) { f.focus(); f.scrollIntoView({ block: 'center' }); } return; }
+  if (t('[data-ed-cancelar]')) { EDITA = null; pintar(); return; }
+  const es = t('[data-ed-salvar]'); if (es) { const p = D.pendencias.find(x => x.id === es.dataset.edSalvar), tx = $('#ed-tx').value.trim();
+    const paras = [...document.querySelectorAll('input[name="ed-para"]:checked')].map(x => x.value);
+    const aguarda = p.area === 'inox' ? [...new Set($('#ed-aguarda').value.split(',').map(x => x.trim().replace(/\s+/g, ' ')).filter(Boolean))].slice(0, 10) : [];
+    if (!tx) { aviso('Escreva o que é'); return; } if (!paras.length && !aguarda.length) { aviso('Marque para quem é'); return; }
+    const mud = { tx, paras, aguarda, prazo: $('#ed-prazo').value || null, ...(p.area === 'inox' ? { tipo: $('#ed-tipo').value } : {}) };
+    if (await grava('Salvar as alterações desta pendência?', async () => ok_(await sb.from('pendencias').update(mud).eq('id', p.id)), 'Pendência atualizada')) { EDITA = null; pintar(); }
+    return; }
+  const pq = t('[data-pend-resp]'); if (pq) { const id = pq.dataset.pendResp, tx = document.querySelector(`[data-pend-resp-tx="${id}"]`).value.trim(); if (!tx) { aviso('Escreva a resposta'); return; }
+    grava('Gravar esta resposta?', async () => ok_(await sb.from('pendencias').update({ resposta: tx, resp_por: EU.id, resp_em: new Date().toISOString() }).eq('id', id)), 'Resposta gravada'); return; }
+  const pi = t('[data-pend-imp]'); if (pi) { const p = D.pendencias.find(x => x.id === pi.dataset.pendImp);
+    grava(p.importante ? 'Tirar a marca de importante?' : 'Marcar esta pendência como importante?', async () => ok_(await sb.from('pendencias').update({ importante: !p.importante }).eq('id', p.id)), 'Gravado'); return; }
   const po = t('[data-pend-ok]'); if (po) { const p = D.pendencias.find(x => x.id === po.dataset.pendOk), novo = !p.ok;
     grava(novo ? 'Marcar a pendência como resolvida?' : 'Reabrir a pendência?', async () => ok_(await sb.from('pendencias').update({ ok: novo, ok_em: novo ? new Date().toISOString() : null }).eq('id', p.id))); return; }
   const pr = t('[data-pend-rm]'); if (pr) { grava('Excluir esta pendência?', async () => ok_(await sb.from('pendencias').delete().eq('id', pr.dataset.pendRm)), 'Pendência excluída'); return; }
@@ -382,7 +413,10 @@ document.addEventListener('change', async e => { const el = e.target;
       ok_(await sb.storage.from('fotos').upload(caminho, foto, { contentType: 'image/jpeg', upsert: true })); ok_(await sb.from('perfis').update({ foto: caminho }).eq('id', EU.id)); }, 'Foto atualizada'); return; }
   if (el.id === 'in-arq') { const a = el.files[0]; el.value = ''; enviarArquivo(a); return; }
   if (el.id === 'in-pend-arq') { const a = el.files[0], p = D.pendencias.find(x => x.id === el.dataset.pend); el.value = ''; if (!a || !p) return; if (a.size > 20 * 1048576) { aviso('Até 20 MB por arquivo'); return; }
-    grava(`Enviar "${a.name}" e resolver a pendência?`, async () => { await subirArquivo(a, 'Pendência'); ok_(await sb.from('pendencias').update({ ok: true, ok_em: new Date().toISOString(), arq: a.name }).eq('id', p.id)); }, 'Arquivo enviado e pendência resolvida'); return; }
+    const resolve = p.tipo === 'arquivo';
+    grava(resolve ? `Enviar "${a.name}" e resolver a pendência?` : `Anexar "${a.name}" a esta pendência?`, async () => { const id = await subirArquivo(a, 'Pendência');
+      ok_(await sb.from('pendencias').update({ anexos: [...p.anexos, id], arq: a.name, ...(resolve ? { ok: true, ok_em: new Date().toISOString() } : {}) }).eq('id', p.id)); },
+      resolve ? 'Arquivo enviado e pendência resolvida' : 'Arquivo anexado'); return; }
   if (el.dataset.marco) { const m = D.marcos.find(x => x.id === el.dataset.marco), v = el.value;
     if (!(await grava(`Mudar "${m.tit}" para ${el.selectedOptions[0].text}?`, async () => ok_(await sb.from('marcos').update({ st: v, atualizado_por: EU.id, atualizado_em: new Date().toISOString() }).eq('id', m.id))))) el.value = m.st; return; }
   if (el.dataset.papel) { const u = U(el.dataset.papel), v = el.value;
