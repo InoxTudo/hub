@@ -94,7 +94,15 @@ main{padding:26px clamp(16px,3vw,36px) 60px; min-width:0;}
 .dests{display:flex; flex-wrap:wrap; gap:8px; margin-top:2px;} .dest{display:flex; align-items:center; gap:8px; border:1px solid var(--borda-forte); border-radius:999px; padding:4px 12px 4px 4px; cursor:pointer; color:var(--fg); font-weight:600; min-height:40px;}
 .dest input{width:16px; height:16px; min-height:0; accent-color:var(--acento); margin:0;} .dest small{font-weight:500; color:var(--fg-3);} .dest:has(input:checked){border-color:var(--acento); background:rgba(220,174,94,.08);}
 .avs{display:flex; flex:none;} .avs .av + .av{margin-left:-12px;} .av.espera{background:var(--painel-2); color:var(--fg-2); border:2px dashed var(--borda-forte);}
-.tags{display:flex; gap:6px; flex-wrap:wrap; align-items:center;} .tag.imp{color:#17130a; background:var(--ouro); border-color:var(--ouro);} .pendc.imp{border-color:color-mix(in srgb,var(--ouro) 60%,var(--borda)); border-left:4px solid var(--ouro);} .anx{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;} .pendc.editando{border-color:var(--acento);} .resp .apagar{margin-left:auto; align-self:flex-start; font-size:12.5px; color:var(--fg-3); min-height:40px;} .resp.apagado{border-left-color:var(--borda-forte); color:var(--fg-3); font-style:italic;} .pendc.editando h4{margin:0 0 12px;}
+.tags{display:flex; gap:6px; flex-wrap:wrap; align-items:center;} .tag.imp{color:#17130a; background:var(--ouro); border-color:var(--ouro);} .pendc.imp{border-color:color-mix(in srgb,var(--ouro) 60%,var(--borda)); border-left:4px solid var(--ouro);} .anx{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;} .pendc.editando{border-color:var(--acento);} .sino{position:relative;} .sino .cont{position:absolute; top:-6px; right:-6px; background:var(--neg); color:#14161a; border-radius:999px; font-size:11px; padding:0 6px; font-weight:700; line-height:18px;}
+#sino-painel{position:fixed; z-index:45; left:262px; bottom:16px; width:min(380px,calc(100vw - 32px)); max-height:min(520px,70vh); overflow:auto; background:var(--painel); border:1px solid var(--borda-forte); border-radius:16px; box-shadow:0 12px 40px rgba(0,0,0,.5); padding:10px; animation:sobe .2s both;}
+.sp-cab{display:flex; align-items:center; gap:10px; padding:4px 6px 10px; border-bottom:1px solid var(--borda); margin-bottom:6px;} .sp-cab b{flex:1;} .sp-cab .lnk{font-size:12.5px;}
+.sp-item{display:flex; gap:10px; width:100%; text-align:left; border:0; background:none; padding:10px 8px; border-radius:10px; cursor:pointer; color:var(--fg-2); align-items:flex-start;}
+.sp-item:hover{background:var(--painel-2);} .sp-item.nova{color:var(--fg); background:rgba(220,174,94,.07);} .sp-item.nova b::before{content:'● '; color:var(--acento);}
+.sp-item small{display:block; color:var(--fg-3); margin-top:2px;} .sp-item i{font-style:normal; color:var(--fg);} .sp-vazio{color:var(--fg-3); padding:10px 8px; margin:0;}
+.marcar{display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:8px;} .marcar small{color:var(--fg-3); margin-right:2px;} .dest.mini{padding:2px 10px 2px 2px; min-height:34px; font-size:13px;} .dest.mini .av{--t:24px;}
+.mencoes{display:block; color:var(--azul); margin-top:4px; font-weight:600;} .pendc.destaque{box-shadow:0 0 0 3px var(--acento); transition:box-shadow .3s;}
+.resp .apagar{margin-left:auto; align-self:flex-start; font-size:12.5px; color:var(--fg-3); min-height:40px;} .resp.apagado{border-left-color:var(--borda-forte); color:var(--fg-3); font-style:italic;} .pendc.editando h4{margin:0 0 12px;}
 /* arquivos */
 .solta{border:2px dashed var(--borda-forte); border-radius:16px; padding:22px; text-align:center; color:var(--fg-2); cursor:pointer; transition:border-color .15s, background .15s;} .solta:hover,.solta.sobre{border-color:var(--acento); background:rgba(220,174,94,.06);}
 table{width:100%; border-collapse:collapse;} th{font:500 12.5px var(--mono); color:var(--fg-3); text-align:left; padding:8px 10px; border-bottom:1px solid var(--borda-forte);} td{padding:10px; border-bottom:1px solid var(--borda); vertical-align:middle;}
@@ -116,7 +124,8 @@ table{width:100%; border-collapse:collapse;} th{font:500 12.5px var(--mono); col
   nav button{flex:none; white-space:nowrap; gap:8px; padding:8px 12px; border-left:0; border-bottom:3px solid transparent; border-radius:10px 10px 0 0;} nav button.on{border-bottom-color:var(--acento);}
   nav .ic{width:22px; height:22px; font-size:12px;}
   .eu{gap:8px; grid-row:1; grid-column:2;} .eu .quem b{display:none;} .eu .av{--t:36px;} .eu .btn.mini{min-height:40px; padding:8px 12px;}
-  #bt-foto{font-size:0;} #bt-foto::after{content:'Foto'; font-size:13px;}
+  #bt-foto{display:none;} .eu .av{cursor:pointer;} .sino{min-width:44px;}
+  #sino-painel{left:16px; right:16px; top:70px; bottom:auto; width:auto; max-height:calc(100vh - 90px);} .dest.mini{min-height:40px;}
   html{scroll-padding-top:130px;} main{padding:18px 16px 60px;} .perg{margin-bottom:16px;} .marco select{grid-column:2; justify-self:start; width:auto; min-width:170px;}
   .btn{min-height:44px;} .btn.mini{min-height:40px; padding:8px 13px;} .filtros button{min-height:40px;}
   .lnk{display:inline-block; padding:10px 4px;} .lg-troca{margin:-6px 0 !important;}
@@ -176,7 +185,7 @@ table{width:100%; border-collapse:collapse;} th{font:500 12.5px var(--mono); col
       <button data-tela="acessos" data-so-admin><span class="ic">●</span>Acessos<span class="cont" id="n-pend" hidden></span></button>
     </nav>
     <div class="eu"><div class="quem" id="eu"></div>
-      <div style="display:flex; gap:8px; flex-wrap:wrap"><button class="btn mini" id="bt-foto">Trocar foto</button><button class="btn mini" id="bt-sair">Sair</button></div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap"><button class="btn mini sino" id="bt-sino" aria-label="Avisos" aria-expanded="false" title="Avisos">🔔<span class="cont" id="n-sino" hidden></span></button><button class="btn mini" id="bt-foto">Trocar foto</button><button class="btn mini" id="bt-sair">Sair</button></div>
       <input type="file" id="in-foto" accept="image/*" hidden></div>
   </aside>
   <main id="conteudo"></main>
@@ -184,6 +193,7 @@ table{width:100%; border-collapse:collapse;} th{font:500 12.5px var(--mono); col
 
 <div id="dlg" hidden><div class="cx"><b id="dlg-t"></b><div class="ac"><button class="btn" id="dlg-n">Cancelar</button><button class="btn ouro" id="dlg-s">Confirmar</button></div></div></div>
 <div id="aviso" hidden></div>
+<section id="sino-painel" hidden aria-label="Avisos"><div class="sp-cab"><b>Avisos</b><button class="lnk" id="bt-lidas">Marcar todos como lidos</button><button class="btn mini" id="bt-sino-fechar" aria-label="Fechar">✕</button></div><div id="sino-lista"></div></section>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
@@ -197,7 +207,7 @@ const SUPA_URL = 'https://kopudvjyxtcwkdulxosb.supabase.co', SUPA_CHAVE = 'sb_pu
 const ERRO_URL = (() => { const q = new URLSearchParams(location.hash.slice(1) || location.search.slice(1)); return q.get('error_code') || q.get('error') || ''; })();
 const sb = window.supabase.createClient(SUPA_URL, SUPA_CHAVE, { auth: { persistSession: true, autoRefreshToken: true } });
 
-let D = { usuarios: [], marcos: [], pendencias: [], duvidas: [], arquivos: [] }, EU = null, SESSAO = null, TELA = 'andamento', FILTRO = 'todas', FPEND = 'abertas', AREA = 'inox', EDITA = null;   // EDITA = id da pendência aberta para edição
+let D = { usuarios: [], marcos: [], pendencias: [], duvidas: [], arquivos: [], avisos: [] }, EU = null, SESSAO = null, TELA = 'andamento', FILTRO = 'todas', FPEND = 'abertas', AREA = 'inox', EDITA = null;   // EDITA = id da pendência aberta para edição
 const $ = s => document.querySelector(s), esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const PAPEL = { dev: 'Dev', ceo: 'CEO', equipe: 'Equipe' };
 /* Níveis (Gabriel, 05/10/2026): todo usuário liberado VÊ e EDITA tudo (cronograma, pendências, dúvidas, arquivos).
@@ -227,19 +237,20 @@ const nomeSeguro = n => n.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w
 
 /* ================= leitura ================= */
 async function carregar() {
-  const [p, m, pe, du, re, ar, co] = await Promise.all([
+  const [p, m, pe, du, re, ar, co, nt] = await Promise.all([
     sb.from('perfis').select('id,nome,email,papel,status,cor,foto').order('criado_em'),
     sb.from('marcos').select('*').order('ordem'),
     sb.from('pendencias').select('*').order('em', { ascending: false }),
     sb.from('duvidas').select('*').order('em', { ascending: false }),
     sb.from('respostas').select('*').order('em'),
     sb.from('arquivos').select('*').order('em', { ascending: false }),
-    sb.from('pend_comentarios').select('*').order('em')]);
+    sb.from('pend_comentarios').select('*').order('em'),
+    sb.from('notificacoes').select('*').order('em', { ascending: false }).limit(60)]);
   const perfis = ok_(p) || [], fotos = perfis.filter(x => x.foto).map(x => x.foto), urls = {};
   if (fotos.length) { const s = await sb.storage.from('fotos').createSignedUrls(fotos, 3600); (s.data || []).forEach(x => { if (x.signedUrl) urls[x.path] = x.signedUrl; }); }
   D.usuarios = perfis.map(x => ({ ...x, foto: x.foto ? urls[x.foto] || '' : '', fotoPath: x.foto }));
   D.marcos = ok_(m) || []; D.arquivos = ok_(ar) || [];
-  const coms = ok_(co) || [];
+  const coms = ok_(co) || []; D.avisos = ok_(nt) || [];
   D.pendencias = (ok_(pe) || []).map(x => ({ ...x, okEm: x.ok_em, paras: x.paras || [], aguarda: x.aguarda || [], anexos: x.anexos || [], coms: coms.filter(c => c.pendencia_id === x.id) }));
   const resp = ok_(re) || []; D.duvidas = (ok_(du) || []).map(d => ({ ...d, resp: resp.filter(r => r.duvida_id === d.id) }));
   EU = SESSAO ? D.usuarios.find(u => u.id === SESSAO.user.id) || null : null;
@@ -262,6 +273,8 @@ const dia = iso => iso ? iso.slice(8, 10) + '/' + iso.slice(5, 7) : '';
 const AREAS = { inox: ['InoxTudo', 'O que a InoxTudo precisa enviar ou responder para o projeto andar.'],
   dev: ['Nossas', 'Nossas pendências de desenvolvimento. Só os Devs veem.'],
   backend: ['Backend · Supabase', 'O que sobe para o Supabase depois. Só os Devs veem.'] };
+/** Quem pode ser marcado num comentário: quem enxerga a pendência (InoxTudo: todo liberado; Nossas/Backend: só Devs), menos você. */
+const marcaveis = p => D.usuarios.filter(u => u.status === 'liberado' && u.id !== EU.id && (p.area === 'inox' || u.papel === 'dev'));
 const meu = p => p.paras.includes(EU.id), TIPO = { info: 'Informação', arquivo: 'Arquivo', tarefa: 'Tarefa' };
 const nomesDe = p => [...p.paras.map(id => U(id).nome), ...p.aguarda.map(n => n + ' (aguardando acesso)')];
 const juntar = l => l.length < 2 ? (l[0] || '—') : l.slice(0, -1).join(', ') + ' e ' + l[l.length - 1];
@@ -299,16 +312,17 @@ function tPendencias() {
   h += L.length ? L.map((p, i) => { const de = U(p.de), atr = !p.ok && p.prazo && p.prazo < hojeISO();
     if (EDITA === p.id) return editorPend(p, i);
     const anx = p.anexos.map(id => D.arquivos.find(a => a.id === id)).filter(Boolean);
-    return `<article class="fio pendc${p.ok ? ' ok' : ''}${p.importante && !p.ok ? ' imp' : ''}" style="--i:${i}"><div class="fio-cab"><span class="avs">${p.paras.map(id => av(U(id))).join('')}${p.aguarda.map(avEspera).join('')}</span><div class="tx"><h4>${esc(p.tx)}</h4>`
+    return `<article class="fio pendc${p.ok ? ' ok' : ''}${p.importante && !p.ok ? ' imp' : ''}" id="pend-${p.id}" style="--i:${i}"><div class="fio-cab"><span class="avs">${p.paras.map(id => av(U(id))).join('')}${p.aguarda.map(avEspera).join('')}</span><div class="tx"><h4>${esc(p.tx)}</h4>`
       + `<small>Para <b>${esc(juntar(nomesDe(p)))}</b> · por ${esc(de.nome)} em ${quando(p.em)}</small></div>`
       + `<span class="tags">${p.importante ? '<span class="tag imp">★ Importante</span>' : ''}<span class="tag az">${TIPO[p.tipo] || esc(p.tipo)}</span>`
       + (p.ok ? `<span class="tag ok cheia">✓ ${p.tipo === 'tarefa' ? 'Concluída' : 'Resolvida'}</span>` : p.prazo ? `<span class="tag ${atr ? 'at' : 'ab'}">${atr ? 'Atrasada · ' : 'até '}${dia(p.prazo)}</span>` : '<span class="tag">sem prazo</span>') + '</span></div>'
       + p.coms.map(c => { const u = U(c.de);
           if (c.apagado_em) return `<div class="resp apagado"><span class="q">🗑 Comentário de <b>${esc(u.nome)}</b> apagado por ${esc(U(c.apagado_por).nome)} em ${quando(c.apagado_em)}</span></div>`;
-          return `<div class="resp" style="--c:${esc(u.cor)}">${av(u, 'p')}<div><span class="q"><b>${esc(u.nome)}</b> <small>· ${quando(c.em)}</small></span><p>${esc(c.tx)}</p></div>`
+          return `<div class="resp" style="--c:${esc(u.cor)}">${av(u, 'p')}<div><span class="q"><b>${esc(u.nome)}</b> <small>· ${quando(c.em)}</small></span><p>${esc(c.tx)}</p>${(c.mencoes || []).length ? `<small class="mencoes">${c.mencoes.map(id => '@' + esc(U(id).nome)).join(' ')}</small>` : ''}</div>`
             + (c.de === EU.id || admin() ? `<button class="lnk apagar" data-com-rm="${c.id}" aria-label="Apagar comentário">Apagar</button>` : '') + '</div>'; }).join('')
       + (anx.length ? `<div class="anx">${anx.map(a => `<button class="btn mini" data-baixar="${a.id}" title="Baixar">📎 ${esc(a.nome)}</button>`).join('')}</div>` : '')
       + `<div class="fio-acoes"><textarea data-com-tx="${p.id}" maxlength="4000" placeholder="Comentar…"></textarea><button class="btn mini" data-com="${p.id}">Comentar</button></div>`
+      + (marcaveis(p).length ? `<div class="marcar"><small>Marcar e avisar:</small>${marcaveis(p).map(u => `<label class="dest mini">${av(u, 'p')}<input type="checkbox" name="men-${p.id}" value="${u.id}"><span>@${esc(u.nome)}</span></label>`).join('')}</div>` : '')
       + `<div class="fio-acoes">${!p.ok ? `<button class="btn mini${p.tipo === 'arquivo' ? ' ouro' : ''}" data-pend-arq="${p.id}">${p.tipo === 'arquivo' ? 'Enviar o arquivo' : '📎 Anexar arquivo'}</button>` : ''}`
       + `<button class="btn mini" data-pend-ed="${p.id}">✎ Editar</button>`
       + (p.ok ? '' : `<button class="btn mini" data-pend-imp="${p.id}">${p.importante ? '☆ Tirar importante' : '★ Marcar importante'}</button>`)
@@ -356,7 +370,32 @@ function pintar() {
   const sel = $('#menu .on'); if (sel && innerWidth <= 1000) sel.scrollIntoView({ block: 'nearest', inline: 'nearest' });   // no celular o menu rola de lado: a tela aberta fica à vista
   const ab = D.duvidas.filter(d => d.st === 'aberta').length, pe = D.usuarios.filter(u => u.status === 'pendente').length, pm = D.pendencias.filter(p => !p.ok && p.paras.includes(EU.id)).length;
   $('#n-duv').hidden = !ab; $('#n-duv').textContent = ab; $('#n-pen').hidden = !pm; $('#n-pen').textContent = pm; $('#n-pend').hidden = !pe; $('#n-pend').textContent = pe;
-  $('#eu').innerHTML = quem(EU); $('#conteudo').innerHTML = TELAS[TELA]();
+  $('#eu').innerHTML = quem(EU); $('#conteudo').innerHTML = TELAS[TELA](); pintarSino();
+  if (!canalAvisos) ouvirAvisos();
+}
+
+/* ================= avisos (sino) =================
+   O banco cria o aviso quando alguém é marcado num comentário (gatilho), e cada um só lê os seus.
+   Abrir um aviso leva à pendência e o marca como lido (como em qualquer app); "Marcar todos como lidos" pede confirmação.
+   Sem push: o sino atualiza na hora com o HUB aberto (Realtime) e ao entrar. */
+function pintarSino() {
+  const n = D.avisos.filter(a => !a.lida_em).length; $('#n-sino').hidden = !n; $('#n-sino').textContent = n;
+  if ($('#sino-painel').hidden) return;
+  $('#sino-lista').innerHTML = D.avisos.length ? D.avisos.map(a => { const de = U(a.de), pd = D.pendencias.find(x => x.id === a.pendencia_id);
+    return `<button class="sp-item${a.lida_em ? '' : ' nova'}" data-aviso="${a.id}">${av(de, 'p')}<span><b>${esc(de.nome)}</b> marcou você em <i>${esc(pd ? pd.tx.slice(0, 90) + (pd.tx.length > 90 ? '…' : '') : 'uma pendência')}</i><small>${quando(a.em)}</small></span></button>`; }).join('')
+    : '<p class="sp-vazio">Nenhum aviso ainda. Quando alguém marcar você num comentário, aparece aqui.</p>';
+  $('#bt-lidas').hidden = !D.avisos.some(a => !a.lida_em);
+}
+function abrirSino(abre) { $('#sino-painel').hidden = !abre; $('#bt-sino').setAttribute('aria-expanded', String(abre)); pintarSino(); }
+async function recarregarAvisos() { const r = await sb.from('notificacoes').select('*').order('em', { ascending: false }).limit(60); if (!r.error) { D.avisos = r.data || []; pintarSino(); } }
+let canalAvisos = null;
+function ouvirAvisos() {
+  if (canalAvisos) { sb.removeChannel(canalAvisos); canalAvisos = null; }
+  if (!SESSAO || !EU || EU.status !== 'liberado' || !sb.channel) return;
+  canalAvisos = sb.channel('avisos-' + EU.id).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificacoes', filter: `para=eq.${EU.id}` }, async () => {
+    // só o sino e as pendências recarregam: a tela não é redesenhada para não apagar o que a pessoa está digitando
+    const r = await sb.from('pend_comentarios').select('*').order('em'); if (!r.error) { const cs = r.data || []; D.pendencias.forEach(p => p.coms = cs.filter(c => c.pendencia_id === p.id)); }
+    await recarregarAvisos(); aviso('🔔 Você foi marcado num comentário'); }).subscribe();
 }
 
 /* ================= ações ================= */
@@ -372,7 +411,19 @@ document.addEventListener('click', async e => { const t = s => e.target.closest(
   const md = t('[data-lg-modo]'); if (md) { lgModo(md.dataset.lgModo); return; }
   const tl = t('#menu [data-tela]'); if (tl) { TELA = tl.dataset.tela; await carregar().catch(() => {}); pintar(); window.scrollTo(0, 0); return; }
   if (t('#bt-sair') || t('#bt-sair-espera')) { if (await confirmar('Sair do HUB?')) { await sb.auth.signOut(); } return; }
-  if (t('#bt-foto')) { $('#in-foto').click(); return; }
+  if (t('#bt-foto') || t('.eu .av')) { $('#in-foto').click(); return; }
+  if (t('#bt-sino')) { abrirSino($('#sino-painel').hidden); return; }
+  if (t('#bt-sino-fechar')) { abrirSino(false); return; }
+  const sa_ = t('[data-aviso]'); if (sa_) { const a = D.avisos.find(x => x.id === sa_.dataset.aviso), pd = D.pendencias.find(x => x.id === a.pendencia_id);
+    if (!a.lida_em) { a.lida_em = new Date().toISOString(); sb.from('notificacoes').update({ lida_em: a.lida_em }).eq('id', a.id).then(r => { if (r.error) a.lida_em = null; pintarSino(); }); }
+    abrirSino(false); if (!pd) { aviso('Essa pendência não existe mais'); return; }
+    TELA = 'pendencias'; AREA = pd.area; FPEND = 'todas'; EDITA = null; pintar();
+    const c = document.getElementById('pend-' + pd.id); if (c) { c.scrollIntoView({ block: 'center' }); c.classList.add('destaque'); setTimeout(() => c.classList.remove('destaque'), 2400); }
+    return; }
+  if (t('#bt-lidas')) { const ids = D.avisos.filter(a => !a.lida_em).map(a => a.id); if (!ids.length) return;
+    if (await confirmar(`Marcar ${ids.length === 1 ? 'o aviso' : `os ${ids.length} avisos`} como lido${ids.length === 1 ? '' : 's'}?`)) {
+      const r = await sb.from('notificacoes').update({ lida_em: new Date().toISOString() }).in('id', ids); if (r.error) aviso('Não foi possível gravar: ' + r.error.message); await recarregarAvisos(); }
+    return; }
   const fl = t('[data-filtro]'); if (fl) { FILTRO = fl.dataset.filtro; pintar(); return; }
   if (t('#bt-duv')) { const tit = $('#duv-tit').value.trim(), tx = $('#duv-tx').value.trim(); if (!tit) { aviso('Escreva o assunto da dúvida'); return; }
     grava('Enviar esta dúvida?', async () => ok_(await sb.from('duvidas').insert({ de: EU.id, tit, tx })), 'Dúvida enviada'); return; }
@@ -406,7 +457,9 @@ document.addEventListener('click', async e => { const t = s => e.target.closest(
     if (await grava('Salvar as alterações desta pendência?', async () => ok_(await sb.from('pendencias').update(mud).eq('id', p.id)), 'Pendência atualizada')) { EDITA = null; pintar(); }
     return; }
   const cm = t('[data-com]'); if (cm) { const id = cm.dataset.com, tx = document.querySelector(`[data-com-tx="${id}"]`).value.trim(); if (!tx) { aviso('Escreva o comentário'); return; }
-    grava('Publicar este comentário?', async () => ok_(await sb.from('pend_comentarios').insert({ pendencia_id: id, de: EU.id, tx })), 'Comentário publicado'); return; }
+    const mencoes = [...document.querySelectorAll(`input[name="men-${id}"]:checked`)].map(x => x.value);
+    grava(mencoes.length ? `Publicar o comentário e avisar ${juntar(mencoes.map(u => U(u).nome))}?` : 'Publicar este comentário?',
+      async () => ok_(await sb.from('pend_comentarios').insert({ pendencia_id: id, de: EU.id, tx, mencoes })), mencoes.length ? 'Comentário publicado e aviso enviado' : 'Comentário publicado'); return; }
   const cr = t('[data-com-rm]'); if (cr) {
     grava('Apagar este comentário? O texto some e fica o registro de quem apagou e quando.', async () => ok_(await sb.from('pend_comentarios').update({ tx: null, apagado_por: EU.id, apagado_em: new Date().toISOString() }).eq('id', cr.dataset.comRm)), 'Comentário apagado'); return; }
   const pi = t('[data-pend-imp]'); if (pi) { const p = D.pendencias.find(x => x.id === pi.dataset.pendImp);
@@ -466,7 +519,8 @@ document.addEventListener('submit', async e => { e.preventDefault(); const b = e
 });
 sb.auth.onAuthStateChange((ev, s) => { SESSAO = s; setTimeout(async () => {   // só lê o banco com sessão: sem login não há o que ler
   if (SESSAO) { try { await carregar(); } catch (x) { console.error(x); } }
-  else { D = { usuarios: [], marcos: [], pendencias: [], duvidas: [], arquivos: [] }; EU = null; lgModo('entrar'); }
+  else { D = { usuarios: [], marcos: [], pendencias: [], duvidas: [], arquivos: [], avisos: [] }; EU = null; lgModo('entrar'); }
+  ouvirAvisos();
   pintar(); }, 0); });
 </script>
 </body>
